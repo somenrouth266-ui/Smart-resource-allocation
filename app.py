@@ -14,9 +14,9 @@ def create_app():
     app = Flask(__name__)
 
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-prod')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL','sqlite:///volunteer.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY', '')
+    app.config['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY')
 
     db.init_app(app)
     login_manager.init_app(app)
