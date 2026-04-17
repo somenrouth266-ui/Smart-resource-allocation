@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}Server Error{% endblock %}
+{% block body %}
+{% block public_content %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px 24px;background:var(--bg);position:relative;overflow:hidden;">
+  <div style="position:absolute;width:600px;height:600px;background:radial-gradient(circle,rgba(239,68,68,0.06) 0%,transparent 70%);top:-200px;left:50%;transform:translateX(-50%);pointer-events:none;"></div>
+  <div style="text-align:center;position:relative;z-index:1;max-width:460px;">
+    <div style="font-family:var(--font-mono);font-size:6rem;font-weight:700;color:var(--border-light);line-height:1;margin-bottom:8px;">500</div>
+    <div style="width:60px;height:3px;background:var(--red);border-radius:99px;margin:0 auto 24px;"></div>
+    <h2 style="margin-bottom:12px;">Something went wrong</h2>
+    <p style="color:var(--text-muted);font-size:0.9rem;line-height:1.7;margin-bottom:32px;">
+      An internal error occurred. Please try again in a moment.
+    </p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <a href="javascript:history.back()" class="btn btn-ghost">← Go Back</a>
+      <a href="{{ url_for('main.index') }}" class="btn btn-primary">Home →</a>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% endblock %}

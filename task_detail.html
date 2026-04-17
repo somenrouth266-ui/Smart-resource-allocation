@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+{% block title %}Impact Report{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>📈 Impact Report</h1>
+    <p>Real-time overview of your program's social impact and resource allocation.</p>
+  </div>
+</div>
+
+<!-- ── Top stat cards ── -->
+<div class="stats-grid mb-32">
+  {% for icon, label, val, cls in [
+    ('👥', 'Total Volunteers',   total_volunteers,       'blue'),
+    ('📋', 'Total Tasks',        total_tasks,            'blue'),
+    ('✅', 'Completed Tasks',    completed_tasks,        'green'),
+    ('🤝', 'Total Assignments',  total_assignments,      'purple'),
+    ('⏱', 'Impact Hours Est.',  impact_hours,           'yellow'),
+  ] %}
+  <div class="stat-card">
+    <div class="stat-icon {{ cls }}">{{ icon }}</div>
+    <div>
+      <div class="stat-value">{{ val }}</div>
+      <div class="stat-label">{{ label }}</div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- ── Charts row ── -->
+<div class="grid-2" style="gap:24px;margin-bottom:24px;">
+
+  <!-- Doughnut: task status -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Task Status Breakdown</h3>
+      {% if total_tasks > 0 %}
+      <span class="badge badge-blue">{{ total_tasks }} total</span>
+      {% endif %}
+    </div>
+    {% if total_tasks > 0 %}
+    <div style="position:relative;height:220px;display:flex;align-items:center;justify-content:center;">
+      <canvas id="taskChart"></canvas>
+      <!-- Centre label -->
+      <div style="position:absolute;text-align:center;pointer-events:none;">
+        <div style="font-family:var(--font-head);font-size:1.8rem;font-weight:700;color:var(--text);">
+          {{ ((completed_tasks / total_tasks)*100)|round|int }}%
+        </div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">complete</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:center;gap:20px;margin-top:16px;flex-wrap:wrap;">
+      {% for label, count, color in [
+        ('Open', open_tasks, '#f59e0b'),
+        ('In Progress', inprogress_tasks, '#3b82f6'),
+        ('Completed', completed_tasks, '#10b981'),
+      ] %}
+      <div style="display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text-muted);">
+        <div style="width:10px;height:10px;border-radius:50%;background:{{ color }};flex-shrink:0;"></div>
+        {{ label }}: <strong style="color:var(--text);margin-left:2px;">{{ count }}</strong>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:40px;"><div class="empty-icon">📊</div><p>No tasks yet.</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Bar: top skills -->
+  <div class="card">
+    <div class="card-header">
+      <h3>Top Volunteer Skills</h3>
+      <span class="badge badge-purple">{{ top_skills | length }} skills</span>
+    </div>
+    {% if top_skills %}
+    <div style="position:relative;height:220px;">
+      <canvas id="skillChart"></canvas>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:40px;"><div class="empty-icon">🎯</div><p>No skill data yet.</p></div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Assignment funnel + detailed skill bars ── -->
+<div class="grid-2" style="gap:24px;margin-bottom:24px;">
+
+  <!-- Assignment funnel -->
+  <div class="card">
+    <div class="card-header"><h3>Assignment Pipeline</h3></div>
+    {% if total_assignments > 0 %}
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      {% for label, count, color, badge in [
+        ('Total Assigned',  total_assignments,      'var(--accent)',  'badge-blue'),
+        ('Accepted',        accepted_assignments,   'var(--green)',   'badge-green'),
+        ('Completed',       completed_assignments,  'var(--purple)',  'badge-purple'),
+        ('Declined',        declined_assignments,   'var(--red)',     'badge-red'),
+      ] %}
+      <div>
+        <div class="flex-between mb-8">
+          <span style="font-size:0.85rem;color:var(--text-muted);">{{ label }}</span>
+          <span class="badge {{ badge }}">{{ count }}</span>
+        </div>
+        <div class="progress">
+          <div class="progress-bar" style="width:{{ ((count/total_assignments)*100)|round }}%;background:{{ color }};"></div>
+        </div>
+      </div>
+      {% endfor %}
+
+      <!-- Acceptance rate -->
+      <div style="padding:16px;background:var(--accent-glow);border:1px solid rgba(59,130,246,0.2);border-radius:var(--radius-sm);text-align:center;margin-top:8px;">
+        <div style="font-family:var(--font-head);font-size:2rem;font-weight:700;color:var(--accent);">
+          {% if total_assignments > 0 %}
+            {{ ((accepted_assignments / total_assignments)*100)|round|int }}%
+          {% else %}—{% endif %}
+        </div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">Acceptance rate</div>
+      </div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:40px;"><div class="empty-icon">🤝</div><p>No assignments yet.</p></div>
+    {% endif %}
+  </div>
+
+  <!-- Detailed skill bars -->
+  <div class="card">
+    <div class="card-header"><h3>Skill Coverage Detail</h3></div>
+    {% if top_skills %}
+      {% set max_count = top_skills[0][1] %}
+      <div style="display:flex;flex-direction:column;gap:13px;">
+        {% for skill, count in top_skills %}
+        <div>
+          <div class="flex-between mb-8">
+            <span class="skill-tag">{{ skill }}</span>
+            <span style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">
+              {{ count }} volunteer{{ 's' if count != 1 }}
+            </span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" style="width:{{ ((count/max_count)*100)|round }}%;"></div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+    <div class="empty-state" style="padding:40px;"><div class="empty-icon">🎯</div><p>No skill data yet.</p></div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Impact summary callout ── -->
+<div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.08),rgba(139,92,246,0.06));border-color:rgba(59,130,246,0.2);">
+  <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;">
+    <div style="font-size:3rem;">🌍</div>
+    <div style="flex:1;">
+      <h3 style="margin-bottom:6px;">Program Impact Summary</h3>
+      <p style="font-size:0.88rem;color:var(--text-muted);line-height:1.7;">
+        Your program has mobilised
+        <strong style="color:var(--accent);">{{ total_volunteers }} volunteer{{ 's' if total_volunteers != 1 }}</strong>
+        across
+        <strong style="color:var(--green);">{{ total_tasks }} task{{ 's' if total_tasks != 1 }}</strong>,
+        completing
+        <strong style="color:var(--purple);">{{ completed_tasks }}</strong>
+        of them and contributing an estimated
+        <strong style="color:var(--yellow);">{{ impact_hours }} volunteer hours</strong>
+        to the community.
+      </p>
+    </div>
+    {% if total_tasks > 0 %}
+    <div style="text-align:center;padding:20px 28px;background:var(--green-bg);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius);">
+      <div style="font-family:var(--font-head);font-size:2.2rem;font-weight:700;color:var(--green);">
+        {{ ((completed_tasks/total_tasks)*100)|round|int }}%
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">completion rate</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Chart.js global defaults to match dark theme
+Chart.defaults.color = '#7a90b0';
+Chart.defaults.borderColor = '#1f2d45';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+
+{% if total_tasks > 0 %}
+// ── Doughnut: task status ──
+new Chart(document.getElementById('taskChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Open', 'In Progress', 'Completed'],
+    datasets: [{
+      data: [{{ open_tasks }}, {{ inprogress_tasks }}, {{ completed_tasks }}],
+      backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+      borderColor: '#111827',
+      borderWidth: 3,
+      hoverOffset: 8,
+    }]
+  },
+  options: {
+    cutout: '72%',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw} task${ctx.raw !== 1 ? 's' : ''}`
+        }
+      }
+    }
+  }
+});
+{% endif %}
+
+{% if top_skills %}
+// ── Horizontal bar: skills ──
+new Chart(document.getElementById('skillChart'), {
+  type: 'bar',
+  data: {
+    labels: [{% for skill, _ in top_skills %}'{{ skill }}',{% endfor %}],
+    datasets: [{
+      label: 'Volunteers',
+      data: [{% for _, count in top_skills %}{{ count }},{% endfor %}],
+      backgroundColor: 'rgba(59,130,246,0.7)',
+      borderColor: '#3b82f6',
+      borderWidth: 1,
+      borderRadius: 4,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.raw} volunteer${ctx.raw !== 1 ? 's' : ''}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: '#1f2d45' },
+        ticks: { stepSize: 1, color: '#7a90b0' },
+        beginAtZero: true,
+      },
+      y: {
+        grid: { display: false },
+        ticks: {
+          color: '#7a90b0',
+          font: { family: "'JetBrains Mono', monospace", size: 11 }
+        }
+      }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

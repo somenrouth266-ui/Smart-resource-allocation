@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Browse Tasks{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Browse Open Tasks</h1>
+    <p>Sorted by skill match — tasks you're best suited for appear first.</p>
+  </div>
+</div>
+
+<!-- Search + filter bar -->
+<div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+  <form method="GET" action="{{ url_for('volunteer.browse_tasks') }}"
+        style="display:flex;gap:10px;flex:1;flex-wrap:wrap;">
+    <input type="text" name="search" value="{{ search }}"
+           class="form-control" placeholder="🔍 Search tasks by title, description, or skill..."
+           style="flex:1;min-width:220px;" />
+    {% if skill_filter %}
+      <input type="hidden" name="skill" value="{{ skill_filter }}" />
+    {% endif %}
+    <button type="submit" class="btn btn-primary">Search</button>
+    {% if search or skill_filter %}
+      <a href="{{ url_for('volunteer.browse_tasks') }}" class="btn btn-ghost">Clear</a>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Skill filter chips -->
+{% if all_skills %}
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px;">
+  <span style="font-size:0.78rem;color:var(--text-dim);line-height:2;margin-right:4px;">Filter by skill:</span>
+  {% for skill in all_skills %}
+  <a href="{{ url_for('volunteer.browse_tasks', search=search, skill=('' if skill_filter == skill else skill)) }}"
+     class="skill-tag"
+     style="{{ 'border-color:var(--accent);color:var(--accent);background:var(--accent-glow);' if skill_filter == skill else '' }}">
+    {{ skill }}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Legend -->
+<div style="display:flex;align-items:center;gap:20px;margin-bottom:20px;font-size:0.78rem;color:var(--text-dim);flex-wrap:wrap;">
+  <span>Match score:</span>
+  <span><span class="score-ring score-high" style="width:28px;height:28px;font-size:0.65rem;display:inline-flex;">70+</span> Great fit</span>
+  <span><span class="score-ring score-medium" style="width:28px;height:28px;font-size:0.65rem;display:inline-flex;">40+</span> Partial</span>
+  <span><span class="score-ring score-low" style="width:28px;height:28px;font-size:0.65rem;display:inline-flex;">&lt;40</span> Low</span>
+  <span style="margin-left:8px;"><span class="skill-tag" style="border-color:var(--green);color:var(--green);">✓ skill</span> You have this skill</span>
+</div>
+
+{% if task_data %}
+  <div style="display:flex;flex-direction:column;gap:14px;">
+    {% for item in task_data %}
+    {% set task = item.task %}
+    {% set score = item.score %}
+    {% set overlap = item.overlap %}
+    {% set assigned = item.assigned %}
+
+    <div class="card" style="padding:20px;{{ 'opacity:0.6;' if assigned }}">
+      <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+
+        <!-- Score ring -->
+        <div class="score-ring {{ 'score-high' if score >= 70 else 'score-medium' if score >= 40 else 'score-low' }}"
+             style="flex-shrink:0;margin-top:2px;" title="{{ score }}% skill match">
+          {% if score > 0 %}{{ score }}%{% else %}—{% endif %}
+        </div>
+
+        <!-- Task info -->
+        <div style="flex:1;min-width:240px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+            <span style="font-weight:600;font-size:1rem;color:var(--text);">{{ task.title }}</span>
+            {% if task.priority == 'high' %}
+              <span class="badge badge-red">🔴 High Priority</span>
+            {% elif task.priority == 'medium' %}
+              <span class="badge badge-yellow">🟡 Medium</span>
+            {% endif %}
+            {% if assigned %}
+              <span class="badge badge-blue">Already Applied</span>
+            {% endif %}
+            {% if task.is_full() %}
+              <span class="badge badge-red">Full</span>
+            {% endif %}
+          </div>
+
+          <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:0.8rem;color:var(--text-dim);margin-bottom:10px;">
+            {% if task.time_slot %}<span>🕐 {{ task.time_slot }}</span>{% endif %}
+            {% if task.location %}<span>📍 {{ task.location }}</span>{% endif %}
+            <span>👥 {{ task.accepted_volunteers_count() }}/{{ task.volunteers_needed }} filled</span>
+          </div>
+
+          {% if task.description %}
+          <p style="font-size:0.85rem;color:var(--text-muted);line-height:1.6;margin-bottom:10px;max-width:580px;">
+            {{ task.description[:140] }}{% if task.description|length > 140 %}…{% endif %}
+          </p>
+          {% endif %}
+
+          <!-- Skills with match highlight -->
+          <div style="display:flex;flex-wrap:wrap;gap:4px;">
+            {% for skill in task.get_required_skills() %}
+              <span class="skill-tag" style="{{ 'border-color:var(--green);color:var(--green);' if skill in overlap }}">
+                {{ '✓ ' if skill in overlap }}{{ skill }}
+              </span>
+            {% endfor %}
+          </div>
+
+        </div>
+
+        <!-- Apply button -->
+        <div style="flex-shrink:0;min-width:110px;">
+          {% if assigned %}
+            <div class="btn btn-ghost btn-sm" style="cursor:default;width:100%;justify-content:center;text-align:center;">Applied ✓</div>
+          {% elif task.is_full() %}
+            <div class="btn btn-ghost btn-sm" style="cursor:default;opacity:0.5;width:100%;justify-content:center;">Full</div>
+          {% else %}
+            <form method="POST" action="{{ url_for('volunteer.apply_task', task_id=task.id) }}">
+              <button type="submit" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">
+                Apply →
+              </button>
+            </form>
+          {% endif %}
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="card">
+    <div class="empty-state">
+      <div class="empty-icon">🔍</div>
+      <h3>No open tasks found</h3>
+      <p>{% if search or skill_filter %}Try adjusting your search or filters.{% else %}No tasks are open right now. Check back soon.{% endif %}</p>
+      {% if search or skill_filter %}
+        <a href="{{ url_for('volunteer.browse_tasks') }}" class="btn btn-ghost">Clear Filters</a>
+      {% endif %}
+    </div>
+  </div>
+{% endif %}
+
+{% endblock %}
