@@ -40,6 +40,13 @@ def create_app():
         app.register_blueprint(volunteer_bp,    url_prefix='/volunteer')
         app.register_blueprint(ai_bp,           url_prefix='/ai')
 
+        @app.errorhandler(404)
+def not_found(e):
+    return "Page Not Found", 404
+
+        @app.errorhandler(500)
+def server_error(e):
+    return "Internal Server Error", 500
 
 
         # ── Context processor: inject helpers into every template ──
