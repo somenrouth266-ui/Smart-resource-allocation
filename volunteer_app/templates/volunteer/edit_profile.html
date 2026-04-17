@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Edit Profile</h1>
+    <p>Update your skills and availability to get better task matches.</p>
+  </div>
+  <a href="{{ url_for('volunteer.profile') }}" class="btn btn-ghost">← Cancel</a>
+</div>
+
+<div style="max-width:640px;">
+  <div class="card">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for cat, msg in messages %}
+        <div class="alert alert-{{ 'error' if cat == 'error' else cat }}" style="margin-bottom:16px;">
+          <span>{{ '✕' if cat == 'error' else '✓' }}</span><span>{{ msg }}</span>
+        </div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('volunteer.edit_profile') }}" novalidate>
+
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" name="name" class="form-control"
+               value="{{ current_user.name }}" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Bio <span style="color:var(--text-dim);font-weight:400;">(optional)</span></label>
+        <textarea name="bio" class="form-control" rows="3"
+                  placeholder="Tell coordinators about yourself and why you volunteer...">{{ current_user.bio or '' }}</textarea>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Your Skills</label>
+        <input type="text" name="skills" id="skillsInput" class="form-control"
+               value="{{ current_user.skills or '' }}"
+               placeholder="e.g. first-aid, teaching, driving, coding" />
+        <div class="form-hint">Comma-separated — used for smart task matching</div>
+        <div id="skillPreview" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;">
+          {% for skill in current_user.get_skills() %}
+            <span class="skill-tag">{{ skill }}</span>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Availability</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+          {% set current_avail = current_user.get_availability() %}
+          {% for slot in ['Mon Morning','Mon Evening','Tue Morning','Tue Evening','Wed Morning','Wed Evening','Thu Morning','Thu Evening','Fri Morning','Fri Evening','Sat All Day','Sun All Day'] %}
+          <label class="avail-slot"
+                 style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:{{ 'var(--accent-glow)' if slot in current_avail else 'var(--bg-card2)' }};border:1px solid {{ 'var(--accent)' if slot in current_avail else 'var(--border)' }};border-radius:var(--radius-sm);cursor:pointer;font-size:0.78rem;color:{{ 'var(--accent)' if slot in current_avail else 'var(--text-muted)' }};transition:all 0.15s;">
+            <input type="checkbox" name="avail_slots" value="{{ slot }}"
+                   style="accent-color:var(--accent);width:auto;"
+                   {{ 'checked' if slot in current_avail }}
+                   onchange="updateAvailInput()" />
+            {{ slot }}
+          </label>
+          {% endfor %}
+        </div>
+        <input type="hidden" name="availability" id="availHidden"
+               value="{{ current_user.availability or '' }}" />
+        <div class="form-hint mt-4">Select all time slots when you're available</div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <a href="{{ url_for('volunteer.profile') }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">
+          Save Changes →
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+// Skill live preview
+document.getElementById('skillsInput').addEventListener('input', function() {
+  const tags = this.value.split(',').map(s => s.trim()).filter(Boolean);
+  document.getElementById('skillPreview').innerHTML =
+    tags.map(t => `<span class="skill-tag">${t}</span>`).join('');
+});
+
+// Availability checkbox → hidden input + styling
+function updateAvailInput() {
+  const checked = [...document.querySelectorAll('input[name="avail_slots"]:checked')]
+    .map(cb => cb.value);
+  document.getElementById('availHidden').value = checked.join(',');
+
+  document.querySelectorAll('.avail-slot').forEach(label => {
+    const cb = label.querySelector('input');
+    label.style.borderColor = cb.checked ? 'var(--accent)' : 'var(--border)';
+    label.style.background  = cb.checked ? 'var(--accent-glow)' : 'var(--bg-card2)';
+    label.style.color       = cb.checked ? 'var(--accent)' : 'var(--text-muted)';
+  });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Create Task{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>Create New Task</h1>
+    <p>Fill in the details — smart matching will find the best volunteers.</p>
+  </div>
+  <a href="{{ url_for('coordinator.tasks') }}" class="btn btn-ghost">← Back to Tasks</a>
+</div>
+
+<div style="max-width:680px;">
+  <div class="card">
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}{% for cat, msg in messages %}
+        <div class="alert alert-{{ 'error' if cat == 'error' else cat }}" style="margin-bottom:16px;">
+          <span>{{ '✕' if cat == 'error' else '✓' }}</span><span>{{ msg }}</span>
+        </div>
+      {% endfor %}{% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('coordinator.create_task') }}" novalidate>
+
+      <div class="form-group">
+        <label class="form-label">Task Title *</label>
+        <input type="text" name="title" class="form-control" placeholder="e.g. First Aid at Community Marathon" required />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea name="description" class="form-control" rows="4"
+          placeholder="Describe what volunteers will be doing, what to bring, any special instructions..."></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Required Skills</label>
+          <input type="text" name="required_skills" id="skillsInput" class="form-control"
+                 placeholder="e.g. first-aid, driving, teaching" />
+          <div class="form-hint">Comma-separated — used for smart matching</div>
+          <div id="skillPreview" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Location</label>
+          <input type="text" name="location" class="form-control" placeholder="e.g. Central Park, New York" />
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Time Slot</label>
+          <input type="text" name="time_slot" class="form-control" placeholder="e.g. Saturday 9am – 1pm" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Volunteers Needed</label>
+          <input type="number" name="volunteers_needed" class="form-control" value="1" min="1" max="100" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Priority Level</label>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;">
+          {% for p, icon, desc in [('low','🟢','Flexible timeline'),('medium','🟡','Standard urgency'),('high','🔴','Urgent — fill fast')] %}
+          <label style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px;background:var(--bg-card2);border:2px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;transition:all 0.2s;font-size:0.82rem;text-align:center;" class="priority-opt">
+            <input type="radio" name="priority" value="{{ p }}" style="position:absolute;opacity:0;" {{ 'checked' if p == 'medium' }} onchange="updatePriority(this)" />
+            <span style="font-size:1.4rem;">{{ icon }}</span>
+            <span style="font-weight:600;color:var(--text);">{{ p | capitalize }}</span>
+            <span style="color:var(--text-dim);">{{ desc }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:8px;">
+        <a href="{{ url_for('coordinator.tasks') }}" class="btn btn-ghost">Cancel</a>
+        <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">
+          Create Task & Find Matches →
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+<script>
+// Skill preview
+document.getElementById('skillsInput').addEventListener('input', function() {
+  const preview = document.getElementById('skillPreview');
+  const tags = this.value.split(',').map(s => s.trim()).filter(Boolean);
+  preview.innerHTML = tags.map(t => `<span class="skill-tag">${t}</span>`).join('');
+});
+
+// Priority option highlight
+function updatePriority(radio) {
+  document.querySelectorAll('.priority-opt').forEach(opt => {
+    opt.style.borderColor = 'var(--border)';
+    opt.style.background  = 'var(--bg-card2)';
+  });
+  const label = radio.closest('label');
+  label.style.borderColor = 'var(--accent)';
+  label.style.background  = 'var(--accent-glow)';
+}
+// Set initial state for medium
+window.addEventListener('DOMContentLoaded', () => {
+  const med = document.querySelector('input[value="medium"]');
+  if (med) updatePriority(med);
+});
+</script>
+
+{% endblock %}

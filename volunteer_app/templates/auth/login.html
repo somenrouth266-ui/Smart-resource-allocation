@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Sign In — VolunteerIQ{% endblock %}
+
+{% block body %}
+{% block public_content %}
+
+<div class="auth-wrapper">
+
+  <!-- Left panel (decorative, hidden on mobile) -->
+  <div style="display:none;" id="leftPanel">
+    <!-- shown via CSS on larger screens -->
+  </div>
+
+  <div class="auth-card">
+
+    <!-- Brand -->
+    <div class="auth-logo">
+      <a href="{{ url_for('main.index') }}" class="brand" style="text-decoration:none;">
+        <span class="brand-dot"></span>
+        VolunteerIQ
+      </a>
+      <p>Smart volunteer coordination platform</p>
+    </div>
+
+    <h2 class="auth-title">Welcome back</h2>
+    <p class="auth-subtitle">Sign in to continue to your dashboard</p>
+
+    <!-- Flash messages inside card -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'error' if category == 'error' else category }}" style="margin-bottom:16px;border-radius:var(--radius-sm);">
+            <span>{% if category == 'success' %}✓{% elif category == 'error' %}✕{% else %}ℹ{% endif %}</span>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.login') }}" novalidate>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email address</label>
+        <input
+          type="email" id="email" name="email"
+          class="form-control"
+          placeholder="you@example.com"
+          required autocomplete="email"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <div style="position:relative;">
+          <input
+            type="password" id="password" name="password"
+            class="form-control"
+            placeholder="••••••••"
+            required autocomplete="current-password"
+            style="padding-right:44px;"
+          />
+          <button type="button" onclick="togglePw('password','eyeIcon')"
+            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:1rem;padding:0;width:auto;">
+            <span id="eyeIcon">👁</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex-between mb-24" style="margin-top:-4px;">
+        <label class="flex-center gap-8" style="cursor:pointer;font-size:0.85rem;color:var(--text-muted);">
+          <input type="checkbox" name="remember" style="accent-color:var(--accent);width:auto;" />
+          Remember me for 30 days
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:13px;">
+        Sign In →
+      </button>
+
+    </form>
+
+    <div class="divider mt-24"><span>new here?</span></div>
+
+    <a href="{{ url_for('auth.register') }}" class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:4px;">
+      Create a free account
+    </a>
+
+    <!-- Role hint -->
+    <div style="margin-top:24px;padding:14px;background:var(--bg-card2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+      <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:8px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Demo accounts</div>
+      <div style="font-size:0.82rem;color:var(--text-muted);line-height:1.8;">
+        Register as a <span style="color:var(--purple);font-weight:600;">Coordinator</span> to create tasks &amp; match volunteers.<br>
+        Register as a <span style="color:var(--accent);font-weight:600;">Volunteer</span> to get matched and track impact.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function togglePw(inputId, iconId) {
+  const inp = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  if (inp.type === 'password') {
+    inp.type = 'text';
+    icon.textContent = '🙈';
+  } else {
+    inp.type = 'password';
+    icon.textContent = '👁';
+  }
+}
+</script>
+
+{% endblock %}
+{% endblock %}

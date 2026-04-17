@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+{% block title %}Volunteer Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+  <div class="page-header-text">
+    <h1>{{ 'Good morning' if now_hour < 12 else 'Good afternoon' if now_hour < 17 else 'Good evening' }}, {{ current_user.name.split()[0] }} 👋</h1>
+    <p>Here's your volunteer activity and suggested tasks.</p>
+  </div>
+  <a href="{{ url_for('volunteer.browse_tasks') }}" class="btn btn-primary">🔍 Browse Tasks</a>
+</div>
+
+<!-- ── Stats ── -->
+<div class="stats-grid mb-32">
+  <div class="stat-card">
+    <div class="stat-icon yellow">⏳</div>
+    <div>
+      <div class="stat-value">{{ pending | length }}</div>
+      <div class="stat-label">Pending</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon blue">🔵</div>
+    <div>
+      <div class="stat-value">{{ accepted | length }}</div>
+      <div class="stat-label">Active Tasks</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green">✅</div>
+    <div>
+      <div class="stat-value">{{ completed | length }}</div>
+      <div class="stat-label">Completed</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon yellow">⏱</div>
+    <div>
+      <div class="stat-value">{{ current_user.impact_hours() }}</div>
+      <div class="stat-label">Impact Hours</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Two column ── -->
+<div class="grid-2" style="gap:24px;margin-bottom:24px;">
+
+  <!-- Pending assignments -->
+  <div class="card">
+    <div class="card-header">
+      <h3>⏳ Awaiting Your Response</h3>
+      {% if pending %}
+        <span class="badge badge-yellow">{{ pending | length }} new</span>
+      {% endif %}
+    </div>
+
+    {% if pending %}
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        {% for a in pending %}
+        <div style="padding:14px;background:var(--bg-card2);border:1px solid var(--border-light);border-radius:var(--radius-sm);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px;">
+            <div>
+              <div style="font-weight:600;color:var(--text);font-size:0.92rem;">{{ a.task.title }}</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);margin-top:3px;">
+                {{ a.task.time_slot or 'Time TBD' }}
+                {% if a.task.location %} · 📍 {{ a.task.location }}{% endif %}
+              </div>
+            </div>
+            {% if a.match_score > 0 %}
+            <div class="score-ring {{ 'score-high' if a.match_score >= 70 else 'score-medium' if a.match_score >= 40 else 'score-low' }}"
+                 title="Skill match score">
+              {{ a.match_score | int }}%
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Skill tags -->
+          {% if a.task.get_required_skills() %}
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px;">
+            {% for skill in a.task.get_required_skills() %}
+              <span class="skill-tag" style="{{ 'border-color:var(--green);color:var(--green);' if skill in my_skills }}">
+                {{ '✓ ' if skill in my_skills }}{{ skill }}
+              </span>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Accept / Decline buttons -->
+          <div style="display:flex;gap:8px;">
+            <form method="POST" action="{{ url_for('volunteer.respond_assignment', assignment_id=a.id) }}" style="flex:1;">
+              <input type="hidden" name="action" value="accept" />
+              <button type="submit" class="btn btn-success btn-sm" style="width:100%;justify-content:center;">✓ Accept</button>
+            </form>
+            <form method="POST" action="{{ url_for('volunteer.respond_assignment', assignment_id=a.id) }}" style="flex:1;">
+              <input type="hidden" name="action" value="decline" />
+              <button type="submit" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;color:var(--red);">✕ Decline</button>
+            </form>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state" style="padding:28px;">
+        <div class="empty-icon">📭</div>
+        <h3>All clear</h3>
+        <p>No pending assignments right now.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Active tasks -->
+  <div class="card">
+    <div class="card-header">
+      <h3>🔵 Active Tasks</h3>
+      <a href="{{ url_for('volunteer.my_assignments') }}" style="font-size:0.82rem;color:var(--accent);">View all →</a>
+    </div>
+
+    {% if accepted %}
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        {% for a in accepted %}
+        <div style="padding:12px;background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius-sm);border-left:3px solid var(--accent);">
+          <div style="font-weight:500;color:var(--text);font-size:0.9rem;margin-bottom:4px;">{{ a.task.title }}</div>
+          <div style="font-size:0.75rem;color:var(--text-dim);">
+            {{ a.task.time_slot or 'Time TBD' }}
+          </div>
+          {% if a.task.get_required_skills() %}
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;">
+            {% for skill in a.task.get_required_skills()[:3] %}
+              <span class="skill-tag">{{ skill }}</span>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state" style="padding:28px;">
+        <div class="empty-icon">📋</div>
+        <h3>No active tasks</h3>
+        <p>Accept assignments or browse open tasks.</p>
+        <a href="{{ url_for('volunteer.browse_tasks') }}" class="btn btn-primary btn-sm">Browse Tasks</a>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Suggested Tasks ── -->
+{% if suggested_data %}
+<div class="card">
+  <div class="card-header">
+    <h3>⚡ Suggested For You</h3>
+    <span class="badge badge-blue">Based on your skills</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;">
+    {% for item in suggested_data %}
+    {% set task  = item.task %}
+    {% set score = item.score %}
+
+    <div style="padding:16px;background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;flex-direction:column;gap:10px;transition:border-color 0.2s;"
+         onmouseover="this.style.borderColor='var(--border-light)'"
+         onmouseout="this.style.borderColor='var(--border)'">
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">
+        <div style="font-weight:600;color:var(--text);font-size:0.9rem;line-height:1.3;">{{ task.title }}</div>
+        {% if score > 0 %}
+        <div class="score-ring {{ 'score-high' if score >= 70 else 'score-medium' if score >= 40 else 'score-low' }}"
+             style="width:42px;height:42px;font-size:0.75rem;flex-shrink:0;">
+          {{ score }}%
+        </div>
+        {% endif %}
+      </div>
+
+      {% if task.time_slot %}
+      <div style="font-size:0.75rem;color:var(--text-dim);">🕐 {{ task.time_slot }}</div>
+      {% endif %}
+
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">
+        {% for skill in item.req[:3] %}
+          <span class="skill-tag" style="{{ 'border-color:var(--green);color:var(--green);' if skill in item.overlap }}">
+            {{ skill }}
+          </span>
+        {% endfor %}
+      </div>
+
+      <form method="POST" action="{{ url_for('volunteer.apply_task', task_id=task.id) }}" style="margin-top:auto;">
+        <button type="submit" class="btn btn-primary btn-sm" style="width:100%;justify-content:center;">Apply →</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Skills card ── -->
+<div class="card mt-24">
+  <div class="card-header">
+    <h3>Your Skills</h3>
+    <a href="{{ url_for('volunteer.edit_profile') }}" class="btn btn-ghost btn-sm">Edit Profile</a>
+  </div>
+  {% if current_user.get_skills() %}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+      {% for skill in current_user.get_skills() %}
+        <span class="skill-tag" style="font-size:0.85rem;padding:6px 14px;">{{ skill }}</span>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state" style="padding:20px;">
+      <p>No skills added yet. <a href="{{ url_for('volunteer.edit_profile') }}">Add your skills</a> to get better task matches.</p>
+    </div>
+  {% endif %}
+</div>
+
+{% endblock %}

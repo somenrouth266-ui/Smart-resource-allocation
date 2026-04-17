@@ -1,0 +1,224 @@
+{% extends 'base.html' %}
+{% block title %}Create Account — VolunteerIQ{% endblock %}
+
+{% block body %}
+{% block public_content %}
+
+<div class="auth-wrapper" style="padding:40px 16px;">
+  <div class="auth-card" style="max-width:540px;">
+
+    <!-- Brand -->
+    <div class="auth-logo">
+      <a href="{{ url_for('main.index') }}" class="brand" style="text-decoration:none;">
+        <span class="brand-dot"></span>
+        VolunteerIQ
+      </a>
+      <p>Join the platform. Make an impact.</p>
+    </div>
+
+    <!-- Progress indicator -->
+    <div style="display:flex;gap:6px;margin-bottom:28px;" id="progressSteps">
+      <div style="flex:1;height:3px;border-radius:99px;background:var(--accent);transition:background 0.3s;" id="step1bar"></div>
+      <div style="flex:1;height:3px;border-radius:99px;background:var(--border);transition:background 0.3s;" id="step2bar"></div>
+    </div>
+
+    <h2 class="auth-title" id="formTitle">Choose your role</h2>
+    <p class="auth-subtitle" id="formSub">Are you coordinating volunteers or joining as one?</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'error' if category == 'error' else category }}" style="margin-bottom:16px;">
+            <span>{% if category == 'success' %}✓{% elif category == 'error' %}✕{% else %}ℹ{% endif %}</span>
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="{{ url_for('auth.register') }}" novalidate id="regForm">
+
+      <!-- ── Step 1: Role ── -->
+      <div id="step1">
+        <div class="role-toggle" style="margin-bottom:0;">
+          <div class="role-option">
+            <input type="radio" id="role_volunteer" name="role" value="volunteer" checked />
+            <label for="role_volunteer" style="padding:22px 14px;">
+              <span class="role-icon">🙋</span>
+              <span style="font-weight:600;">Volunteer</span>
+              <span style="font-size:0.75rem;color:var(--text-dim);text-align:center;line-height:1.4;">Get matched to tasks that fit your skills</span>
+            </label>
+          </div>
+          <div class="role-option">
+            <input type="radio" id="role_coordinator" name="role" value="coordinator" />
+            <label for="role_coordinator" style="padding:22px 14px;">
+              <span class="role-icon">🎯</span>
+              <span style="font-weight:600;">Coordinator</span>
+              <span style="font-size:0.75rem;color:var(--text-dim);text-align:center;line-height:1.4;">Create tasks and manage volunteers</span>
+            </label>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary" style="width:100%;justify-content:center;margin-top:24px;" onclick="goStep2()">
+          Continue →
+        </button>
+      </div>
+
+      <!-- ── Step 2: Details ── -->
+      <div id="step2" style="display:none;">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="name">Full Name</label>
+            <input type="text" id="name" name="name" class="form-control"
+                   placeholder="Jane Doe" required autocomplete="name" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="email">Email</label>
+            <input type="email" id="email" name="email" class="form-control"
+                   placeholder="you@example.com" required autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label" for="pw">Password</label>
+            <div style="position:relative;">
+              <input type="password" id="pw" name="password" class="form-control"
+                     placeholder="Min. 6 chars" required style="padding-right:44px;" />
+              <button type="button" onclick="togglePw('pw','eye1')"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:1rem;padding:0;width:auto;">
+                <span id="eye1">👁</span>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="pw2">Confirm</label>
+            <div style="position:relative;">
+              <input type="password" id="pw2" name="confirm_password" class="form-control"
+                     placeholder="Repeat password" required style="padding-right:44px;" />
+              <button type="button" onclick="togglePw('pw2','eye2')"
+                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-dim);font-size:1rem;padding:0;width:auto;">
+                <span id="eye2">👁</span>
+              </button>
+            </div>
+            <div id="pwMatch" style="font-size:0.75rem;margin-top:4px;"></div>
+          </div>
+        </div>
+
+        <!-- Volunteer-only fields -->
+        <div id="volunteerFields">
+          <div class="form-group">
+            <label class="form-label">Your Skills</label>
+            <input type="text" name="skills" id="skillsInput" class="form-control"
+                   placeholder="e.g. first-aid, teaching, driving, coding" />
+            <div class="form-hint">Comma-separated — used for smart task matching</div>
+            <div id="skillPreview" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:4px;min-height:8px;"></div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Availability</label>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;" id="availGrid">
+              {% for slot in ['Mon Morning','Mon Evening','Tue Morning','Tue Evening','Wed Morning','Wed Evening','Thu Morning','Thu Evening','Fri Morning','Fri Evening','Sat All Day','Sun All Day'] %}
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 10px;background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;font-size:0.78rem;color:var(--text-muted);transition:all 0.15s;" class="avail-slot">
+                <input type="checkbox" name="avail_slots" value="{{ slot }}" style="accent-color:var(--accent);width:auto;" onchange="updateAvailInput()" />
+                {{ slot }}
+              </label>
+              {% endfor %}
+            </div>
+            <input type="hidden" name="availability" id="availHidden" />
+            <div class="form-hint mt-4">Select all time slots when you're available</div>
+          </div>
+        </div>
+
+        <!-- Buttons -->
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button type="button" class="btn btn-ghost" style="flex:0 0 auto;" onclick="goStep1()">← Back</button>
+          <button type="submit" class="btn btn-primary" style="flex:1;justify-content:center;">
+            Create Account →
+          </button>
+        </div>
+
+      </div>
+    </form>
+
+    <div class="divider mt-24"><span>have an account?</span></div>
+    <a href="{{ url_for('auth.login') }}" class="btn btn-secondary" style="width:100%;justify-content:center;margin-top:4px;">
+      Sign in instead
+    </a>
+
+  </div>
+</div>
+
+<script>
+let selectedRole = 'volunteer';
+
+function goStep2() {
+  selectedRole = document.querySelector('input[name="role"]:checked').value;
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = 'block';
+  document.getElementById('step1bar').style.background = 'var(--accent)';
+  document.getElementById('step2bar').style.background = 'var(--accent)';
+  document.getElementById('formTitle').textContent = selectedRole === 'coordinator' ? 'Coordinator details' : 'Volunteer details';
+  document.getElementById('formSub').textContent = selectedRole === 'coordinator' ? 'Set up your coordinator account' : 'Tell us about your skills and availability';
+  document.getElementById('volunteerFields').style.display = selectedRole === 'volunteer' ? 'block' : 'none';
+}
+
+function goStep1() {
+  document.getElementById('step1').style.display = 'block';
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step2bar').style.background = 'var(--border)';
+  document.getElementById('formTitle').textContent = 'Choose your role';
+  document.getElementById('formSub').textContent = 'Are you coordinating volunteers or joining as one?';
+}
+
+function togglePw(inputId, iconId) {
+  const inp = document.getElementById(inputId);
+  const icon = document.getElementById(iconId);
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  icon.textContent = inp.type === 'password' ? '👁' : '🙈';
+}
+
+// Password match checker
+document.getElementById('pw2').addEventListener('input', function() {
+  const match = document.getElementById('pw').value === this.value;
+  const hint = document.getElementById('pwMatch');
+  if (!this.value) { hint.textContent = ''; return; }
+  hint.textContent = match ? '✓ Passwords match' : '✕ Passwords do not match';
+  hint.style.color = match ? 'var(--green)' : 'var(--red)';
+  this.style.borderColor = match ? '' : 'var(--red)';
+});
+
+// Skill tag preview
+document.getElementById('skillsInput').addEventListener('input', function() {
+  const preview = document.getElementById('skillPreview');
+  const tags = this.value.split(',').map(s => s.trim()).filter(Boolean);
+  preview.innerHTML = tags.map(t =>
+    `<span class="skill-tag">${t}</span>`
+  ).join('');
+});
+
+// Availability checkboxes → hidden input
+function updateAvailInput() {
+  const checked = [...document.querySelectorAll('input[name="avail_slots"]:checked')]
+    .map(cb => cb.value);
+  document.getElementById('availHidden').value = checked.join(',');
+
+  // Style checked labels
+  document.querySelectorAll('.avail-slot').forEach(label => {
+    const cb = label.querySelector('input');
+    label.style.borderColor = cb.checked ? 'var(--accent)' : 'var(--border)';
+    label.style.background  = cb.checked ? 'var(--accent-glow)' : 'var(--bg-card2)';
+    label.style.color       = cb.checked ? 'var(--accent)' : 'var(--text-muted)';
+  });
+}
+
+// If flash errors on step 2 fields, jump to step 2
+window.addEventListener('DOMContentLoaded', () => {
+  const hasErrors = document.querySelector('.alert-error');
+  if (hasErrors) goStep2();
+});
+</script>
+
+{% endblock %}
+{% endblock %}
