@@ -35,21 +35,21 @@ def create_app():
         from routes.ai_suggest import ai_bp
 
         app.register_blueprint(main_bp)
-        app.register_blueprint(auth_bp,         url_prefix='/auth')
-        app.register_blueprint(coordinator_bp,  url_prefix='/coordinator')
-        app.register_blueprint(volunteer_bp,    url_prefix='/volunteer')
-        app.register_blueprint(ai_bp,           url_prefix='/ai')
+        app.register_blueprint(auth_bp, url_prefix='/auth')
+        app.register_blueprint(coordinator_bp, url_prefix='/coordinator')
+        app.register_blueprint(volunteer_bp, url_prefix='/volunteer')
+        app.register_blueprint(ai_bp, url_prefix='/ai')
 
+        # ── Error Handlers ──
         @app.errorhandler(404)
-def not_found(e):
-    return "Page Not Found", 404
+        def not_found(e):
+            return "Page Not Found", 404
 
         @app.errorhandler(500)
-def server_error(e):
-    return "Internal Server Error", 500
+        def server_error(e):
+            return "Internal Server Error", 500
 
-
-        # ── Context processor: inject helpers into every template ──
+        # ── Context processor ──
         from datetime import datetime
 
         @app.context_processor
