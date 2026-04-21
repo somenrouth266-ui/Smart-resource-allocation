@@ -1,84 +1,153 @@
-<div class="card mt-24" id="ai-suggest">
+{% extends 'base.html' %}
+{% block title %}{{ task.title }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="page-header-text">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+      <a href="{{ url_for('coordinator.tasks') }}" style="color:var(--text-dim);font-size:0.82rem;">Tasks</a>
+      <span style="color:var(--text-dim);">›</span>
+      <span style="color:var(--text-muted);font-size:0.82rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ task.title }}</span>
+    </div>
+    <h1>{{ task.title }}</h1>
+  </div>
+  <div style="display:flex;gap:10px;">
+    <form method="POST" action="{{ url_for('coordinator.delete_task', task_id=task.id) }}"
+          onsubmit="return confirm('Delete this task and all its assignments?')">
+      <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--red);">🗑 Delete</button>
+    </form>
+  </div>
+</div>
+
+<div class="grid-2" style="gap:24px;margin-bottom:24px;">
+  <div class="card">
+    <div class="card-header">
+      <h3>Task Details</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        {% if task.priority == 'high' %}<span class="badge badge-red">🔴 High</span>
+        {% elif task.priority == 'medium' %}<span class="badge badge-yellow">🟡 Medium</span>
+        {% else %}<span class="badge badge-blue">🟢 Low</span>{% endif %}
+        
+        {% if task.status == 'open' %}<span class="badge badge-yellow">Open</span>
+        {% elif task.status == 'in-progress' %}<span class="badge badge-blue">In Progress</span>
+        {% else %}<span class="badge badge-green">Completed</span>{% endif %}
+      </div>
+    </div>
+
+    {% if task.description %}
+    <p style="color:var(--text-muted);font-size:0.88rem;line-height:1.7;margin-bottom:20px;padding:14px;background:var(--bg-card2);border-radius:var(--radius-sm);border-left:3px solid var(--border-light);">
+      {{ task.description }}
+    </p>
+    {% endif %}
+
+    <div style="display:flex;flex-direction:column;gap:13px;margin-bottom:20px;">
+      {% if task.time_slot %}
+      <div class="flex-center gap-12">
+        <span style="width:24px;text-align:center;">🕐</span>
+        <span style="font-size:0.75rem;color:var(--text-dim);width:90px;">Time Slot</span>
+        <span style="font-size:0.88rem;color:var(--text);">{{ task.time_slot }}</span>
+      </div>
+      {% endif %}
+      <div class="flex-center gap-12">
+        <span style="width:24px;text-align:center;">👥</span>
+        <span style="font-size:0.75rem;color:var(--text-dim);width:90px;">Volunteers</span>
+        <span style="font-size:0.88rem;color:{{ 'var(--green)' if task.is_full() else 'var(--text)' }};">
+          {{ task.accepted_volunteers_count() }} / {{ task.volunteers_needed }}
+        </span>
+      </div>
+    </div>
+
+    <div style="padding-top:16px;border-top:1px solid var(--border);">
+      <form method="POST" action="{{ url_for('coordinator.update_task_status', task_id=task.id) }}" style="display:flex;gap:8px;">
+        <select name="status" class="form-control" style="flex:1;">
+          <option value="open" {{ 'selected' if task.status=='open' }}>Open</option>
+          <option value="in-progress" {{ 'selected' if task.status=='in-progress' }}>In Progress</option>
+          <option value="completed" {{ 'selected' if task.status=='completed' }}>Completed</option>
+        </select>
+        <button type="submit" class="btn btn-secondary">Save</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3>Assigned Volunteers</h3>
+      <span class="badge badge-blue">{{ assignments | length }}</span>
+    </div>
+    {% if assignments %}
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        {% for a in assignments %}
+        <div style="padding:13px;background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;gap:12px;">
+          <div style="flex:1;">
+            <div style="font-weight:500;font-size:0.9rem;">{{ a.user.name }}</div>
+            <div style="font-size:0.72rem;color:var(--text-dim);">Match: {{ a.match_score | int }}%</div>
+          </div>
+          <span class="badge">{{ a.status | capitalize }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="text-align:center;padding:20px;color:var(--text-dim);">No assignments yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="card" id="ai-suggest">
   <div class="card-header">
     <div>
       <h3>🤖 AI Volunteer Suggestion</h3>
       <div style="font-size:0.8rem;color:var(--text-muted);margin-top:3px;">
-        Gemini AI reviews match scores and gives a plain-English recommendation
+        Gemini AI reviews match scores and provides a recommendation.
       </div>
     </div>
     {% if matches %}
-    <button id="aiBtn" class="btn btn-primary" onclick="getAISuggestion()">
-      ✨ Get Gemini Suggestion
-    </button>
+    <button id="aiBtn" class="btn btn-primary" onclick="getAISuggestion()">✨ Get Gemini Suggestion</button>
     {% endif %}
   </div>
 
   {% if not matches %}
-  <div class="empty-state" style="padding:32px;">
-    <div class="empty-icon">🤖</div>
-    <h3>No candidates to analyse</h3>
-    <p>Add volunteers to the platform first, then AI can suggest the best fit.</p>
-  </div>
+    <div class="empty-state" style="padding:32px; text-align:center;">
+      <p>No candidates available for AI analysis.</p>
+    </div>
   {% else %}
-
-  <div id="aiLoading" style="display:none;padding:32px;text-align:center;">
-    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
-      <div class="ai-spinner"></div>
-      <span style="color:var(--text-muted);font-size:0.9rem;">Gemini is reviewing {{ matches|length }} candidate{{ 's' if matches|length != 1 }}…</span>
+    <div id="aiLoading" style="display:none;padding:32px;text-align:center;">
+      <div class="ai-spinner" style="margin: 0 auto 10px;"></div>
+      <span style="color:var(--text-muted);">Gemini is reviewing candidates...</span>
     </div>
-    <div style="font-size:0.78rem;color:var(--text-dim);">Analysing skills · availability · workload · reliability</div>
-  </div>
 
-  <div id="aiResult" style="display:none;">
-    <div style="padding:20px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.06));
-                border:1px solid rgba(139,92,246,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
-      <div style="display:flex;align-items:flex-start;gap:12px;">
-        <div style="font-size:1.8rem;flex-shrink:0;">🤖</div>
-        <div id="aiText" style="font-size:0.9rem;color:var(--text);line-height:1.75;flex:1;"></div>
+    <div id="aiResult" style="display:none;">
+      <div style="padding:20px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.06)); border:1px solid rgba(139,92,246,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
+        <div style="display:flex;gap:12px;">
+          <div style="font-size:1.8rem;">🤖</div>
+          <div id="aiText" style="font-size:0.9rem;line-height:1.75;flex:1;"></div>
+        </div>
       </div>
+      
+      <div id="aiMockNote" style="display:none;padding:10px 14px;background:var(--yellow-bg);border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-sm);font-size:0.78rem;color:var(--yellow);margin-bottom:16px;">
+        ⚠ Running in demo mode. Set GEMINI_API_KEY in Railway for full AI suggestions.
+      </div>
+      
+      <button class="btn btn-ghost btn-sm" onclick="resetAI()">↺ Ask again</button>
     </div>
-    
-    <div id="aiMockNote" style="display:none;padding:10px 14px;background:var(--yellow-bg);border:1px solid rgba(245,158,11,0.2);
-         border-radius:var(--radius-sm);font-size:0.78rem;color:var(--yellow);margin-bottom:16px;">
-      ⚠ Running in demo mode. Set <code style="font-family:var(--font-mono);">GEMINI_API_KEY</code> in Railway for full AI suggestions.
-    </div>
-    
-    <button class="btn btn-ghost btn-sm" onclick="resetAI()">↺ Ask again</button>
-  </div>
 
-  <div id="aiError" style="display:none;padding:16px;background:var(--red-bg);border:1px solid rgba(239,68,68,0.2);
-       border-radius:var(--radius-sm);font-size:0.88rem;color:var(--red);"></div>
-
+    <div id="aiError" style="display:none;padding:16px;background:var(--red-bg);border-radius:var(--radius-sm);color:var(--red);"></div>
   {% endif %}
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <style>
-.ai-spinner {
-  width: 20px; height: 20px;
-  border: 2px solid var(--border);
-  border-top-color: var(--purple);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+  .ai-spinner {
+    width: 24px; height: 24px;
+    border: 3px solid var(--border);
+    border-top-color: var(--purple);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 
 <script>
-function filterMatches(tier) {
-  document.querySelectorAll('.match-card').forEach(card => {
-    card.style.display = (tier === 'all' || card.dataset.tier === tier) ? 'block' : 'none';
-  });
-  document.querySelectorAll('.filter-btn').forEach(btn => {
-    const active = btn.dataset.tier === tier;
-    btn.style.background  = active ? 'var(--accent-glow)' : '';
-    btn.style.color       = active ? 'var(--accent)' : '';
-    btn.style.borderColor = active ? 'rgba(59,130,246,0.3)' : '';
-  });
-}
-
 async function getAISuggestion() {
   const aiBtn = document.getElementById('aiBtn');
   const aiLoading = document.getElementById('aiLoading');
@@ -87,12 +156,10 @@ async function getAISuggestion() {
   const aiMockNote = document.getElementById('aiMockNote');
   const aiText = document.getElementById('aiText');
 
-  // Reset UI
   aiBtn.style.display = 'none';
   aiLoading.style.display = 'block';
   aiResult.style.display = 'none';
   aiError.style.display = 'none';
-  aiMockNote.style.display = 'none';
 
   try {
     const resp = await fetch('/ai/suggest/{{ task.id }}', { method: 'POST' });
@@ -107,7 +174,6 @@ async function getAISuggestion() {
       return;
     }
 
-    // Format Markdown to HTML
     const html = data.suggestion
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n\n/g, '</p><p style="margin-top:10px;">')
@@ -116,7 +182,6 @@ async function getAISuggestion() {
     aiText.innerHTML = '<p>' + html + '</p>';
     aiResult.style.display = 'block';
 
-    // Toggle warning based on 'mock' variable from Python
     if (data.mock === true) {
       aiMockNote.style.display = 'block';
     } else {
@@ -133,7 +198,6 @@ async function getAISuggestion() {
 
 function resetAI() {
   document.getElementById('aiResult').style.display = 'none';
-  document.getElementById('aiError').style.display = 'none';
   document.getElementById('aiBtn').style.display = 'inline-flex';
 }
 </script>
