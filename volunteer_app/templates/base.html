@@ -5,11 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}VolunteerIQ{% endblock %} — Smart Resource Allocation</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}" />
+  <style>
+    /* Smooth page transitions */
+    .fade-in { animation: fadeIn 0.3s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    
+    /* Loading state for buttons */
+    button.loading { pointer-events: none; opacity: 0.7; position: relative; color: transparent !important; }
+    button.loading::after {
+      content: ""; position: absolute; left: 50%; top: 50%; width: 16px; height: 16px;
+      margin: -8px 0 0 -8px; border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+  </style>
   {% block extra_head %}{% endblock %}
 </head>
 <body>
 
-  <!-- ── Navbar ── -->
   {% if request.endpoint != 'main.index' %}
   <nav class="navbar">
     <a href="{{ url_for('main.index') }}" class="navbar-brand">
@@ -19,42 +31,33 @@
     <ul class="navbar-nav">
       {% if current_user.is_authenticated %}
         {% if current_user.role == 'coordinator' %}
-          <li><a href="{{ url_for('coordinator.dashboard') }}" class="{% if request.endpoint and 'coordinator' in request.endpoint %}active{% endif %}">Dashboard</a></li>
-          <li><a href="{{ url_for('coordinator.tasks') }}" class="{% if request.endpoint == 'coordinator.tasks' %}active{% endif %}">Tasks</a></li>
-          <li><a href="{{ url_for('coordinator.volunteers') }}" class="{% if request.endpoint == 'coordinator.volunteers' %}active{% endif %}">Volunteers</a></li>
+          <li><a href="{{ url_for('coordinator.dashboard') }}" class="{% if 'coordinator.dashboard' in request.endpoint %}active{% endif %}">Dashboard</a></li>
+          <li><a href="{{ url_for('coordinator.tasks') }}" class="{% if 'coordinator.tasks' in request.endpoint %}active{% endif %}">Tasks</a></li>
+          <li><a href="{{ url_for('coordinator.volunteers') }}" class="{% if 'coordinator.volunteers' in request.endpoint %}active{% endif %}">Volunteers</a></li>
         {% else %}
-          <li><a href="{{ url_for('volunteer.dashboard') }}" class="{% if request.endpoint and 'volunteer' in request.endpoint %}active{% endif %}">Dashboard</a></li>
-          <li><a href="{{ url_for('volunteer.my_assignments') }}" class="{% if request.endpoint == 'volunteer.my_assignments' %}active{% endif %}">My Tasks</a></li>
+          <li><a href="{{ url_for('volunteer.dashboard') }}" class="{% if 'volunteer.dashboard' in request.endpoint %}active{% endif %}">Dashboard</a></li>
+          <li><a href="{{ url_for('volunteer.my_assignments') }}" class="{% if 'volunteer.my_assignments' in request.endpoint %}active{% endif %}">My Tasks</a></li>
         {% endif %}
-        <li>
-          <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm" style="margin-left:8px;">Sign Out</a>
-        </li>
+        <li><a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm" style="margin-left:8px;">Sign Out</a></li>
       {% else %}
         <li><a href="{{ url_for('auth.login') }}">Login</a></li>
-        <li>
-          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm" style="margin-left:8px;">Get Started</a>
-        </li>
+        <li><a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm" style="margin-left:8px;">Get Started</a></li>
       {% endif %}
     </ul>
   </nav>
   {% endif %}
 
-  <!-- ── Mobile sidebar toggle ── -->
   {% if current_user.is_authenticated %}
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
   <button class="sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
   {% endif %}
 
-  <!-- ── Flash messages ── -->
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
       <div class="flash-container" id="flashContainer">
         {% for category, message in messages %}
-          <div class="alert alert-{{ 'error' if category == 'error' else category }}"
-               onclick="this.remove()">
-            <span>
-              {% if category == 'success' %}✓{% elif category == 'error' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}
-            </span>
+          <div class="alert alert-{{ 'error' if category == 'error' else category }}" onclick="this.remove()">
+            <span>{% if category == 'success' %}✓{% elif category == 'error' %}✕{% elif category == 'warning' %}⚠{% else %}ℹ{% endif %}</span>
             <span>{{ message }}</span>
           </div>
         {% endfor %}
@@ -62,15 +65,11 @@
     {% endif %}
   {% endwith %}
 
-  <!-- ── Page content ── -->
   {% block body %}
     {% if current_user.is_authenticated %}
-      <div class="page-wrapper">
-
-        <!-- Sidebar -->
+      <div class="page-wrapper fade-in">
         <aside class="sidebar">
           <div class="sidebar-section">
-            <!-- User info -->
             <div style="padding:12px;margin-bottom:20px;background:var(--bg-card2);border-radius:var(--radius-sm);border:1px solid var(--border);">
               <div style="font-weight:600;font-size:0.9rem;color:var(--text);margin-bottom:2px;">{{ current_user.name }}</div>
               <div style="font-size:0.75rem;color:var(--text-dim);">{{ current_user.email }}</div>
@@ -83,64 +82,40 @@
 
             {% if current_user.role == 'coordinator' %}
               <div class="sidebar-label">Coordinator</div>
-              <a href="{{ url_for('coordinator.dashboard') }}" class="sidebar-link {% if request.endpoint == 'coordinator.dashboard' %}active{% endif %}">
-                <span class="icon">📊</span> Dashboard
-              </a>
-              <a href="{{ url_for('coordinator.tasks') }}" class="sidebar-link {% if request.endpoint == 'coordinator.tasks' %}active{% endif %}">
-                <span class="icon">📋</span> All Tasks
-              </a>
-              <a href="{{ url_for('coordinator.create_task') }}" class="sidebar-link {% if request.endpoint == 'coordinator.create_task' %}active{% endif %}">
-                <span class="icon">➕</span> Create Task
-              </a>
-              <a href="{{ url_for('coordinator.volunteers') }}" class="sidebar-link {% if request.endpoint == 'coordinator.volunteers' %}active{% endif %}">
-                <span class="icon">👥</span> Volunteers
-              </a>
-              <a href="{{ url_for('coordinator.impact') }}" class="sidebar-link {% if request.endpoint == 'coordinator.impact' %}active{% endif %}">
-                <span class="icon">📈</span> Impact Report
-              </a>
+              <a href="{{ url_for('coordinator.dashboard') }}" class="sidebar-link {% if request.endpoint == 'coordinator.dashboard' %}active{% endif %}">📊 Dashboard</a>
+              <a href="{{ url_for('coordinator.tasks') }}" class="sidebar-link {% if 'coordinator.tasks' in request.endpoint or 'coordinator.task_detail' in request.endpoint %}active{% endif %}">📋 All Tasks</a>
+              <a href="{{ url_for('coordinator.create_task') }}" class="sidebar-link {% if request.endpoint == 'coordinator.create_task' %}active{% endif %}">➕ Create Task</a>
+              <a href="{{ url_for('coordinator.volunteers') }}" class="sidebar-link {% if request.endpoint == 'coordinator.volunteers' %}active{% endif %}">👥 Volunteers</a>
+              <a href="{{ url_for('coordinator.impact') }}" class="sidebar-link {% if request.endpoint == 'coordinator.impact' %}active{% endif %}">📈 Impact Report</a>
             {% else %}
               <div class="sidebar-label">Volunteer</div>
-              <a href="{{ url_for('volunteer.dashboard') }}" class="sidebar-link {% if request.endpoint == 'volunteer.dashboard' %}active{% endif %}">
-                <span class="icon">🏠</span> Dashboard
-              </a>
-              <a href="{{ url_for('volunteer.my_assignments') }}" class="sidebar-link {% if request.endpoint == 'volunteer.my_assignments' %}active{% endif %}">
-                <span class="icon">✅</span> My Tasks
-              </a>
-              <a href="{{ url_for('volunteer.browse_tasks') }}" class="sidebar-link {% if request.endpoint == 'volunteer.browse_tasks' %}active{% endif %}">
-                <span class="icon">🔍</span> Browse Tasks
-              </a>
-              <a href="{{ url_for('volunteer.profile') }}" class="sidebar-link {% if request.endpoint == 'volunteer.profile' %}active{% endif %}">
-                <span class="icon">👤</span> My Profile
-              </a>
+              <a href="{{ url_for('volunteer.dashboard') }}" class="sidebar-link {% if request.endpoint == 'volunteer.dashboard' %}active{% endif %}">🏠 Dashboard</a>
+              <a href="{{ url_for('volunteer.my_assignments') }}" class="sidebar-link {% if request.endpoint == 'volunteer.my_assignments' %}active{% endif %}">✅ My Tasks</a>
+              <a href="{{ url_for('volunteer.browse_tasks') }}" class="sidebar-link {% if request.endpoint == 'volunteer.browse_tasks' %}active{% endif %}">🔍 Browse Tasks</a>
+              <a href="{{ url_for('volunteer.profile') }}" class="sidebar-link {% if request.endpoint == 'volunteer.profile' %}active{% endif %}">👤 My Profile</a>
             {% endif %}
           </div>
-
           <div class="sidebar-section" style="margin-top:auto;">
-            <a href="{{ url_for('auth.logout') }}" class="sidebar-link">
-              <span class="icon">🚪</span> Sign Out
-            </a>
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-link">🚪 Sign Out</a>
           </div>
         </aside>
 
-        <!-- Main -->
         <main class="main-content">
           {% block content %}{% endblock %}
         </main>
       </div>
-
     {% else %}
       {% block public_content %}{% endblock %}
     {% endif %}
   {% endblock %}
 
-  <!-- ── JS ── -->
   <script>
+    // Auto-hide flash messages
     setTimeout(() => {
       const container = document.getElementById('flashContainer');
       if (container) {
         container.querySelectorAll('.alert').forEach((el, i) => {
           setTimeout(() => {
-            el.style.transition = 'opacity 0.4s, transform 0.4s';
             el.style.opacity = '0';
             el.style.transform = 'translateX(110%)';
             setTimeout(() => el.remove(), 400);
@@ -158,12 +133,11 @@
       document.getElementById('sidebarBackdrop')?.classList.remove('open');
     }
 
+    // Global loading state for forms
     document.addEventListener('submit', function(e) {
-      const form = e.target;
-      const btn = form.querySelector('button[type="submit"]');
+      const btn = e.target.querySelector('button[type="submit"]');
       if (btn && !btn.dataset.noLoading) {
         btn.classList.add('loading');
-        form.classList.add('submitting');
       }
     });
   </script>
