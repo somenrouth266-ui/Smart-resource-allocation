@@ -6,12 +6,8 @@
 
 <div style="min-height:100vh; background:var(--bg); overflow:hidden;">
 
-
-
-  <!-- ── Hero ── -->
   <section style="position:relative; min-height:100vh; display:flex; flex-direction:column;">
 
-    <!-- Navbar override for landing -->
     <nav style="display:flex; align-items:center; justify-content:space-between; padding:20px 48px; position:relative; z-index:10;">
       <div style="display:flex; align-items:center; gap:10px;">
         <div style="width:10px;height:10px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px var(--accent);animation:pulse-dot 2s infinite;"></div>
@@ -23,13 +19,11 @@
       </div>
     </nav>
 
-    <!-- Background glows -->
     <div style="position:absolute;inset:0;pointer-events:none;overflow:hidden;">
       <div style="position:absolute;width:800px;height:800px;background:radial-gradient(circle,rgba(59,130,246,0.09) 0%,transparent 65%);top:-300px;left:50%;transform:translateX(-50%);"></div>
       <div style="position:absolute;width:500px;height:500px;background:radial-gradient(circle,rgba(139,92,246,0.07) 0%,transparent 65%);bottom:-100px;left:-100px;"></div>
       <div style="position:absolute;width:400px;height:400px;background:radial-gradient(circle,rgba(16,185,129,0.06) 0%,transparent 65%);bottom:0;right:0;"></div>
 
-      <!-- Grid lines -->
       <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:0.03;" xmlns="http://www.w3.org/2000/svg">
         <defs>
           <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
@@ -40,14 +34,12 @@
       </svg>
     </div>
 
-    <!-- Hero content -->
     <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:60px 24px;position:relative;z-index:2;">
       <div style="max-width:740px;text-align:center;">
 
-        <!-- Label pill -->
         <div style="display:inline-flex;align-items:center;gap:8px;background:var(--accent-glow);border:1px solid rgba(59,130,246,0.25);border-radius:99px;padding:6px 16px;font-size:0.8rem;font-weight:600;color:var(--accent);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:28px;">
           <span style="width:6px;height:6px;background:var(--accent);border-radius:50%;display:inline-block;"></span>
-          Data-Driven Volunteer Coordination
+          AI-Powered Volunteer Coordination
         </div>
 
         <h1 style="font-size:clamp(2.4rem,6vw,4rem);font-weight:700;line-height:1.12;margin-bottom:24px;letter-spacing:-0.02em;">
@@ -60,7 +52,7 @@
         </h1>
 
         <p style="font-size:1.1rem;color:var(--text-muted);line-height:1.75;max-width:560px;margin:0 auto 40px;">
-          VolunteerIQ uses skill-based smart matching and Claude AI suggestions to connect coordinators with the best-fit volunteers — automatically, at scale, for real social impact.
+          VolunteerIQ uses skill-based smart matching and Gemini 2.0 AI suggestions to connect coordinators with the best-fit volunteers — automatically, at scale, for real social impact.
         </p>
 
         <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap;">
@@ -72,9 +64,8 @@
           </a>
         </div>
 
-        <!-- Mini stats row -->
         <div style="display:flex;justify-content:center;gap:40px;margin-top:56px;flex-wrap:wrap;">
-          {% set stats = [('Smart Matching','Skill-based algorithm'),('AI Suggestions','Claude-powered picks'),('Impact Tracking','Real-time analytics')] %}
+          {% set stats = [('Smart Matching','Skill-based algorithm'),('AI Suggestions','Gemini-powered picks'),('Impact Tracking','Real-time analytics')] %}
           {% for label, sub in stats %}
           <div style="text-align:center;">
             <div style="font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--text);margin-bottom:4px;">{{ label }}</div>
@@ -87,7 +78,6 @@
     </div>
   </section>
 
-  <!-- ── How It Works ── -->
   <section style="padding:100px 48px;border-top:1px solid var(--border);position:relative;">
     <div style="max-width:1100px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:60px;">
@@ -99,7 +89,7 @@
         {% set steps = [
           ('01','Post a Task','Coordinators create tasks with required skills, time slots, priority levels, and volunteer count needed.','📋','var(--accent)'),
           ('02','Smart Match','Our algorithm scores every volunteer by skill overlap, availability, and workload — surfacing the best fits instantly.','⚡','var(--green)'),
-          ('03','AI Suggests','Claude AI reviews candidates and writes a plain-English recommendation explaining exactly who to pick and why.','🤖','var(--purple)')
+          ('03','Gemini Insights','Google Gemini AI reviews candidates and writes a plain-English recommendation explaining exactly who to pick and why.','🤖','var(--purple)')
         ] %}
         {% for num, title, desc, icon, color in steps %}
         <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;position:relative;overflow:hidden;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='var(--border-light)';this.style.transform='translateY(-4px)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='translateY(0)'">
@@ -113,7 +103,6 @@
     </div>
   </section>
 
-  <!-- ── Features ── -->
   <section style="padding:80px 48px;background:var(--bg-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
     <div style="max-width:1100px;margin:0 auto;">
       <div style="text-align:center;margin-bottom:52px;">
@@ -126,7 +115,7 @@
           ('🎯','Weighted Matching','Skill overlap + availability + past workload combined into a single match score.'),
           ('📊','Coordinator Dashboard','Full task pipeline view with status tracking and volunteer assignment controls.'),
           ('✅','Volunteer Portal','Accept/decline tasks, track impact hours, manage your profile and skills.'),
-          ('🤖','AI Recommendations','Ask Claude AI to recommend the single best volunteer for any task.'),
+          ('🤖','Gemini 2.0 Flash','Harness Google’s fastest AI to recommend the single best volunteer for any task.'),
           ('📈','Impact Reports','Visualize volunteer hours deployed, skills utilized, and tasks completed over time.'),
           ('🔒','Role-Based Access','Coordinators and volunteers see exactly what they need — nothing more.')
         ] %}
@@ -141,13 +130,12 @@
     </div>
   </section>
 
-  <!-- ── CTA ── -->
   <section style="padding:100px 48px;text-align:center;position:relative;overflow:hidden;">
     <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(59,130,246,0.07) 0%,transparent 65%);pointer-events:none;"></div>
     <div style="position:relative;z-index:1;max-width:540px;margin:0 auto;">
       <h2 style="font-size:2.2rem;font-weight:700;margin-bottom:16px;">Ready to make an impact?</h2>
       <p style="color:var(--text-muted);margin-bottom:36px;font-size:1rem;line-height:1.7;">
-        Join coordinators and volunteers already using VolunteerIQ to do more good, more efficiently.
+        Join coordinators and volunteers already using VolunteerIQ and Gemini AI to do more good, more efficiently.
       </p>
       <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">
         Create Free Account →
@@ -155,7 +143,6 @@
     </div>
   </section>
 
-  <!-- ── Footer ── -->
   <footer style="border-top:1px solid var(--border);padding:24px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
     <div style="display:flex;align-items:center;gap:8px;">
       <div style="width:8px;height:8px;background:var(--accent);border-radius:50%;"></div>
