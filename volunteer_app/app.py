@@ -14,10 +14,12 @@ def create_app():
     app = Flask(__name__)
 
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-prod')
+
     database_url = os.getenv('DATABASE_URL', 'sqlite:///volunteer.db')
-if database_url.startswith('postgres://'):
-    database_url = database_url.replace('postgres://', 'postgresql://', 1)
-app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    if database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql://', 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY', '')
 
@@ -30,7 +32,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
     with app.app_context():
         from models import User, Task, Assignment
 
-        # ── Blueprints ──
         from routes.auth import auth_bp
         from routes.coordinator import coordinator_bp
         from routes.volunteer import volunteer_bp
@@ -43,7 +44,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
         app.register_blueprint(volunteer_bp,    url_prefix='/volunteer')
         app.register_blueprint(ai_bp,           url_prefix='/ai')
 
-        # ── Error handlers ──
         @app.errorhandler(404)
         def not_found(e):
             return render_template('errors/404.html'), 404
@@ -52,7 +52,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_url
         def server_error(e):
             return render_template('errors/500.html'), 500
 
-        # ── Context processor: inject helpers into every template ──
         from datetime import datetime
 
         @app.context_processor
