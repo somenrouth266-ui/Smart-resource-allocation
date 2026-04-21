@@ -10,12 +10,12 @@
 <body>
 
   <!-- ── Navbar ── -->
+  {% if request.endpoint != 'main.index' %}
   <nav class="navbar">
     <a href="{{ url_for('main.index') }}" class="navbar-brand">
       <span class="dot"></span>
       VolunteerIQ
     </a>
-
     <ul class="navbar-nav">
       {% if current_user.is_authenticated %}
         {% if current_user.role == 'coordinator' %}
@@ -26,22 +26,18 @@
           <li><a href="{{ url_for('volunteer.dashboard') }}" class="{% if request.endpoint and 'volunteer' in request.endpoint %}active{% endif %}">Dashboard</a></li>
           <li><a href="{{ url_for('volunteer.my_assignments') }}" class="{% if request.endpoint == 'volunteer.my_assignments' %}active{% endif %}">My Tasks</a></li>
         {% endif %}
-
         <li>
-          <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm" style="margin-left:8px;">
-            Sign Out
-          </a>
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-ghost btn-sm" style="margin-left:8px;">Sign Out</a>
         </li>
       {% else %}
         <li><a href="{{ url_for('auth.login') }}">Login</a></li>
         <li>
-          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm" style="margin-left:8px;">
-            Get Started
-          </a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-sm" style="margin-left:8px;">Get Started</a>
         </li>
       {% endif %}
     </ul>
   </nav>
+  {% endif %}
 
   <!-- ── Mobile sidebar toggle ── -->
   {% if current_user.is_authenticated %}
@@ -75,9 +71,9 @@
         <aside class="sidebar">
           <div class="sidebar-section">
             <!-- User info -->
-            <div style="padding: 12px; margin-bottom: 20px; background: var(--bg-card2); border-radius: var(--radius-sm); border: 1px solid var(--border);">
-              <div style="font-weight:600; font-size:0.9rem; color:var(--text); margin-bottom:2px;">{{ current_user.name }}</div>
-              <div style="font-size:0.75rem; color:var(--text-dim);">{{ current_user.email }}</div>
+            <div style="padding:12px;margin-bottom:20px;background:var(--bg-card2);border-radius:var(--radius-sm);border:1px solid var(--border);">
+              <div style="font-weight:600;font-size:0.9rem;color:var(--text);margin-bottom:2px;">{{ current_user.name }}</div>
+              <div style="font-size:0.75rem;color:var(--text-dim);">{{ current_user.email }}</div>
               <div style="margin-top:8px;">
                 <span class="badge {% if current_user.role == 'coordinator' %}badge-purple{% else %}badge-blue{% endif %}">
                   {{ current_user.role | capitalize }}
@@ -139,7 +135,6 @@
 
   <!-- ── JS ── -->
   <script>
-    // Auto-dismiss flash messages after 4s
     setTimeout(() => {
       const container = document.getElementById('flashContainer');
       if (container) {
@@ -154,7 +149,6 @@
       }
     }, 4000);
 
-    // Mobile sidebar
     function toggleSidebar() {
       document.querySelector('.sidebar').classList.toggle('open');
       document.getElementById('sidebarBackdrop').classList.toggle('open');
@@ -164,7 +158,6 @@
       document.getElementById('sidebarBackdrop')?.classList.remove('open');
     }
 
-    // Button loading state on form submit
     document.addEventListener('submit', function(e) {
       const form = e.target;
       const btn = form.querySelector('button[type="submit"]');
