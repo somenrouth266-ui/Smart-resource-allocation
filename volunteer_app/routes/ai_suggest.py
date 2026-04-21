@@ -74,6 +74,8 @@ def suggest(task_id):
 
     # PULL FROM APP CONFIG (Matches the update in app.py)
     api_key = current_app.config.get('GEMINI_API_KEY', '')
+
+    print(f"DEBUG: Key found: {api_key[:5] if api_key else 'NONE'}")
     
     # Fallback if no API key is found
     if not api_key:
