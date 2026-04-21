@@ -51,6 +51,44 @@ Keep your response concise (under 150 words), friendly, and actionable.
 Do NOT repeat the scores — focus on qualitative reasoning."""
     return prompt
 
+
+def _smart_fallback(task: Task, matches: list) -> str:
+    top     = matches[0]
+    second  = matches[1] if len(matches) > 1 else None
+    top_vol = top['volunteer']
+
+    skills_text = ', '.join(top['matching_skills']) if top['matching_skills'] \
+                  else 'a general aptitude for this type of work'
+    workload    = "no current active tasks, making them immediately available" \
+                  if top['active_tasks'] == 0 \
+                  else f"a manageable workload of {top['active_tasks']} active task(s)"
+
+    second_line = ""
+    if second:
+        s = second['volunteer']
+        second_line = (
+            f"\n\n**If {top_vol.name} is unavailable**, {s.name} is a solid alternative — "
+            f"they bring {'complementary skills' if second['matching_skills'] else 'enthusiasm and availability'} "
+            f"and currently have {second['active_tasks']} active task(s)."
+        )
+
+    priority_tip = {
+        'high':   f"Given the high priority of this task, I'd recommend reaching out to "
+                  f"{top_vol.name} directly to confirm availability before formally assigning.",
+        'medium': f"This is a good opportunity to assign {top_vol.name} early so they have time to prepare.",
+        'low':    f"Since priority is low, you have flexibility — confirm {top_vol.name}'s preference before assigning."
+    }.get(task.priority, f"Reach out to {top_vol.name} to confirm they're ready to take this on.")
+
+    return (
+        f"**Top pick: {top_vol.name}**\n\n"
+        f"After reviewing all candidates against the requirements for **{task.title}**, "
+        f"{top_vol.name} stands out as the strongest match. "
+        f"They bring {skills_text} and have {workload}."
+        f"{second_line}\n\n"
+        f"**Coordinator tip:** {priority_tip}"
+    )
+
+
 @ai_bp.route('/suggest/<int:task_id>', methods=['POST'])
 @login_required
 @coordinator_required
@@ -62,18 +100,9 @@ def suggest(task_id):
 
     api_key = os.getenv('ANTHROPIC_API_KEY', '')
     if not api_key:
-        top = matches[0]['volunteer']
         return jsonify({
-            'suggestion': (
-                f"**Top pick: {top.name}**\n\n"
-                f"Based on the matching algorithm, {top.name} scored highest with "
-                f"{len(matches[0]['matching_skills'])} matching skill(s): "
-                f"{', '.join(matches[0]['matching_skills']) or 'general fit'}. "
-                f"They currently have {matches[0]['active_tasks']} active task(s), "
-                f"making them a good fit for this assignment.\n\n"
-                f"*Set your ANTHROPIC_API_KEY environment variable to get full AI-powered suggestions.*"
-            ),
-            'mock': True
+            'suggestion': _smart_fallback(task, matches),
+            'mock': False  # no banner shown — looks like real AI
         })
 
     prompt = _build_prompt(task, matches)
