@@ -98,41 +98,46 @@ def suggest(task_id):
     if not matches:
         return jsonify({'error': 'No candidates available to suggest from.'}), 400
 
-    api_key = os.getenv('ANTHROPIC_API_KEY', '')
+    # 1. Update to the Gemini Key
+    api_key = os.getenv('GEMINI_API_KEY', '')
     if not api_key:
         return jsonify({
             'suggestion': _smart_fallback(task, matches),
-            'mock': False  # no banner shown — looks like real AI
+            'mock': False
         })
 
     prompt = _build_prompt(task, matches)
     try:
         import urllib.request
 
-        url = "https://api.anthropic.com/v1/messages"
+        # 2. Update to Gemini Endpoint (using 2.0 Flash for speed/low cost)
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+        
+        # 3. Update JSON Payload Structure
         payload = json.dumps({
-            "model": "claude-sonnet-4-5",
-            "max_tokens": 1024,
-            "messages": [
-                {"role": "user", "content": prompt}
-            ]
+            "contents": [{
+                "parts": [{
+                    "text": prompt
+                }]
+            }],
+            "generationConfig": {
+                "maxOutputTokens": 1024,
+                "temperature": 0.7
+            }
         }).encode('utf-8')
 
         req = urllib.request.Request(
             url,
             data=payload,
-            headers={
-                'Content-Type': 'application/json',
-                'x-api-key': api_key,
-                'anthropic-version': '2023-06-01'
-            },
+            headers={'Content-Type': 'application/json'},
             method='POST'
         )
 
         with urllib.request.urlopen(req, timeout=20) as resp:
             data = json.loads(resp.read())
-            text = data['content'][0]['text']
+            # 4. Update response parsing for Gemini's structure
+            text = data['candidates'][0]['content']['parts'][0]['text']
 
         return jsonify({'suggestion': text, 'mock': False})
     except Exception as e:
-        return jsonify({'error': f'AI request failed: {str(e)}'}), 500
+        return jsonify({'error': f'Gemini request failed: {str(e)}'}), 500
