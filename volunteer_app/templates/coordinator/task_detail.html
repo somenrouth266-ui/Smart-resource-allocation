@@ -303,7 +303,7 @@
     <div>
       <h3>🤖 AI Volunteer Suggestion</h3>
       <div style="font-size:0.8rem;color:var(--text-muted);margin-top:3px;">
-        Gemini AI reviews match scores and gives a plain-English recommendation
+        Claude AI reviews match scores and gives a plain-English recommendation
       </div>
     </div>
     {% if matches %}
@@ -324,7 +324,7 @@
   <div id="aiLoading" style="display:none;padding:32px;text-align:center;">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
       <div class="ai-spinner"></div>
-      <span style="color:var(--text-muted);font-size:0.9rem;">Gemini is reviewing {{ matches|length }} candidate{{ 's' if matches|length != 1 }}…</span>
+      <span style="color:var(--text-muted);font-size:0.9rem;">Claude is reviewing {{ matches|length }} candidate{{ 's' if matches|length != 1 }}…</span>
     </div>
     <div style="font-size:0.78rem;color:var(--text-dim);">Analysing skills · availability · workload · reliability</div>
   </div>
@@ -339,7 +339,7 @@
     </div>
     <div id="aiMockNote" style="display:none;padding:10px 14px;background:var(--yellow-bg);border:1px solid rgba(245,158,11,0.2);
          border-radius:var(--radius-sm);font-size:0.78rem;color:var(--yellow);">
-      ⚠ Running in demo mode. Set <code style="font-family:var(--font-mono);">GEMINI_API_KEY</code> in your <code style="font-family:var(--font-mono);">.env</code> for full AI suggestions.
+      ⚠ Running in demo mode. Set <code style="font-family:var(--font-mono);">ANTHROPIC_API_KEY</code> in your <code style="font-family:var(--font-mono);">.env</code> for full AI suggestions.
     </div>
     <button class="btn btn-ghost btn-sm mt-16" onclick="resetAI()">↺ Ask again</button>
   </div>
