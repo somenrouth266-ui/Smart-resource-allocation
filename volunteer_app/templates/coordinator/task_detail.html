@@ -3,7 +3,6 @@
 
 {% block content %}
 
-<!-- Breadcrumb + header -->
 <div class="page-header">
   <div class="page-header-text">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
@@ -21,10 +20,8 @@
   </div>
 </div>
 
-<!-- Top row: task info + assignments -->
 <div class="grid-2" style="gap:24px;margin-bottom:24px;">
 
-  <!-- Task Info Card -->
   <div class="card">
     <div class="card-header">
       <h3>Task Details</h3>
@@ -88,13 +85,12 @@
       </div>
     </div>
 
-    <!-- Update status -->
     <div style="padding-top:16px;border-top:1px solid var(--border);">
       <div style="font-size:0.72rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Update Status</div>
       <form method="POST" action="{{ url_for('coordinator.update_task_status', task_id=task.id) }}"
             style="display:flex;gap:8px;">
         <select name="status" class="form-control" style="flex:1;">
-          <option value="open"        {{ 'selected' if task.status=='open' }}>Open</option>
+          <option value="open"       {{ 'selected' if task.status=='open' }}>Open</option>
           <option value="in-progress" {{ 'selected' if task.status=='in-progress' }}>In Progress</option>
           <option value="completed"   {{ 'selected' if task.status=='completed' }}>Completed</option>
         </select>
@@ -103,7 +99,6 @@
     </div>
   </div>
 
-  <!-- Assigned Volunteers -->
   <div class="card">
     <div class="card-header">
       <h3>Assigned Volunteers</h3>
@@ -152,7 +147,6 @@
 
 </div>
 
-<!-- Smart Match -->
 <div class="card" id="match">
   <div class="card-header">
     <div>
@@ -297,18 +291,17 @@
   {% endif %}
 </div>
 
-<!-- AI Suggest Panel -->
 <div class="card mt-24" id="ai-suggest">
   <div class="card-header">
     <div>
       <h3>🤖 AI Volunteer Suggestion</h3>
       <div style="font-size:0.8rem;color:var(--text-muted);margin-top:3px;">
-        Claude AI reviews match scores and gives a plain-English recommendation
+        Gemini AI reviews match scores and gives a plain-English recommendation
       </div>
     </div>
     {% if matches %}
     <button id="aiBtn" class="btn btn-primary" onclick="getAISuggestion()">
-      ✨ Get AI Suggestion
+      ✨ Get Gemini Suggestion
     </button>
     {% endif %}
   </div>
@@ -324,7 +317,7 @@
   <div id="aiLoading" style="display:none;padding:32px;text-align:center;">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
       <div class="ai-spinner"></div>
-      <span style="color:var(--text-muted);font-size:0.9rem;">Claude is reviewing {{ matches|length }} candidate{{ 's' if matches|length != 1 }}…</span>
+      <span style="color:var(--text-muted);font-size:0.9rem;">Gemini is reviewing {{ matches|length }} candidate{{ 's' if matches|length != 1 }}…</span>
     </div>
     <div style="font-size:0.78rem;color:var(--text-dim);">Analysing skills · availability · workload · reliability</div>
   </div>
@@ -339,7 +332,7 @@
     </div>
     <div id="aiMockNote" style="display:none;padding:10px 14px;background:var(--yellow-bg);border:1px solid rgba(245,158,11,0.2);
          border-radius:var(--radius-sm);font-size:0.78rem;color:var(--yellow);">
-      ⚠ Running in demo mode. Set <code style="font-family:var(--font-mono);">ANTHROPIC_API_KEY</code> in your <code style="font-family:var(--font-mono);">.env</code> for full AI suggestions.
+      ⚠ Running in demo mode. Set <code style="font-family:var(--font-mono);">GEMINI_API_KEY</code> in your <code style="font-family:var(--font-mono);">.env</code> for full AI suggestions.
     </div>
     <button class="btn btn-ghost btn-sm mt-16" onclick="resetAI()">↺ Ask again</button>
   </div>
