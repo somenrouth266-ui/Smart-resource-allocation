@@ -130,7 +130,7 @@
       <button class="btn btn-ghost btn-sm" onclick="resetAI()">↺ Ask again</button>
     </div>
 
-    <div id="aiError" style="display:none;padding:16px;background:var(--red-bg);border-radius:var(--radius-sm);color:var(--red);"></div>
+    <div id="aiError" style="display:none;padding:16px;background:var(--red-bg);border-radius:var(--radius-sm);color:var(--red);margin-top:10px;"></div>
   {% endif %}
 </div>
 {% endblock %}
@@ -156,10 +156,12 @@ async function getAISuggestion() {
   const aiMockNote = document.getElementById('aiMockNote');
   const aiText = document.getElementById('aiText');
 
+  // Clear UI State
   aiBtn.style.display = 'none';
   aiLoading.style.display = 'block';
   aiResult.style.display = 'none';
   aiError.style.display = 'none';
+  aiMockNote.style.display = 'none';
 
   try {
     const resp = await fetch('/ai/suggest/{{ task.id }}', { method: 'POST' });
@@ -174,6 +176,7 @@ async function getAISuggestion() {
       return;
     }
 
+    // Format results
     const html = data.suggestion
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n\n/g, '</p><p style="margin-top:10px;">')
@@ -182,6 +185,7 @@ async function getAISuggestion() {
     aiText.innerHTML = '<p>' + html + '</p>';
     aiResult.style.display = 'block';
 
+    // Toggle mock note
     if (data.mock === true) {
       aiMockNote.style.display = 'block';
     } else {
@@ -190,7 +194,7 @@ async function getAISuggestion() {
 
   } catch(e) {
     aiLoading.style.display = 'none';
-    aiError.textContent = '⚠ Network error. Please try again.';
+    aiError.textContent = '⚠ Server communication error. Please retry.';
     aiError.style.display = 'block';
     aiBtn.style.display = 'inline-flex';
   }
@@ -198,6 +202,7 @@ async function getAISuggestion() {
 
 function resetAI() {
   document.getElementById('aiResult').style.display = 'none';
+  document.getElementById('aiError').style.display = 'none';
   document.getElementById('aiBtn').style.display = 'inline-flex';
 }
 </script>
