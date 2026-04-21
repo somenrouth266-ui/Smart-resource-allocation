@@ -1,5 +1,5 @@
 import os, json, time
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from flask_login import login_required, current_user
 from functools import wraps
 from models import User, Task, Assignment
@@ -9,7 +9,7 @@ import urllib.error
 
 ai_bp = Blueprint('ai', __name__)
 
-# --- 1. DECORATOR DEFINITION (Must be at the top) ---
+# --- 1. DECORATOR DEFINITION ---
 def coordinator_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -72,8 +72,10 @@ def suggest(task_id):
     if not matches:
         return jsonify({'error': 'No candidates available.'}), 400
 
-    api_key = os.getenv('GEMINI_API_KEY', '')
+    # PULL FROM APP CONFIG (Matches the update in app.py)
+    api_key = current_app.config.get('GEMINI_API_KEY', '')
     
+    # Fallback if no API key is found
     if not api_key:
         return jsonify({'suggestion': _smart_fallback(task, matches), 'mock': True})
 
@@ -95,10 +97,11 @@ def suggest(task_id):
                     return jsonify({'suggestion': text.strip(), 'mock': False})
                 raise Exception("AI Response structure invalid")
         except urllib.error.HTTPError as e:
+            # Handle rate limiting (429) with a 2-second sleep and one retry
             if e.code == 429 and attempt == 0:
                 time.sleep(2)
                 continue
-            break # Exit loop and use fallback
+            break 
         except Exception:
             break
 
