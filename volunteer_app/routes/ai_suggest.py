@@ -15,10 +15,8 @@ def coordinator_required(f):
         return f(*args, **kwargs)
     return decorated
 
-
 def _build_prompt(task: Task, matches: list) -> str:
     top = matches[:5]
-
     candidates = []
     for i, m in enumerate(top, 1):
         v = m['volunteer']
@@ -29,9 +27,7 @@ def _build_prompt(task: Task, matches: list) -> str:
             f"   Active tasks: {m['active_tasks']}\n"
             f"   Availability slots: {', '.join(v.get_availability()) or 'not specified'}"
         )
-
     candidates_text = "\n".join(candidates)
-
     prompt = f"""You are a volunteer coordination assistant helping a coordinator choose the best volunteer for a task.
 
 TASK DETAILS:
@@ -53,9 +49,7 @@ Please provide:
 
 Keep your response concise (under 150 words), friendly, and actionable.
 Do NOT repeat the scores — focus on qualitative reasoning."""
-
     return prompt
-
 
 @ai_bp.route('/suggest/<int:task_id>', methods=['POST'])
 @login_required
@@ -63,11 +57,10 @@ Do NOT repeat the scores — focus on qualitative reasoning."""
 def suggest(task_id):
     task = Task.query.get_or_404(task_id)
     matches = match_volunteers_to_task(task)
-
     if not matches:
         return jsonify({'error': 'No candidates available to suggest from.'}), 400
 
-    api_key = os.getenv('GEMINI_API_KEY', '')
+    api_key = os.getenv('ANTHROPIC_API_KEY', '')
     if not api_key:
         top = matches[0]['volunteer']
         return jsonify({
@@ -78,34 +71,39 @@ def suggest(task_id):
                 f"{', '.join(matches[0]['matching_skills']) or 'general fit'}. "
                 f"They currently have {matches[0]['active_tasks']} active task(s), "
                 f"making them a good fit for this assignment.\n\n"
-                f"*Set your GEMINI_API_KEY environment variable to get full AI-powered suggestions.*"
+                f"*Set your ANTHROPIC_API_KEY environment variable to get full AI-powered suggestions.*"
             ),
             'mock': True
         })
 
     prompt = _build_prompt(task, matches)
-
     try:
         import urllib.request
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
-
+        url = "https://api.anthropic.com/v1/messages"
         payload = json.dumps({
-            "contents": [{"parts": [{"text": prompt}]}]
+            "model": "claude-sonnet-4-5",
+            "max_tokens": 1024,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
         }).encode('utf-8')
 
         req = urllib.request.Request(
             url,
             data=payload,
-            headers={'Content-Type': 'application/json'},
+            headers={
+                'Content-Type': 'application/json',
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01'
+            },
             method='POST'
         )
 
         with urllib.request.urlopen(req, timeout=20) as resp:
             data = json.loads(resp.read())
-            text = data['candidates'][0]['content']['parts'][0]['text']
+            text = data['content'][0]['text']
 
         return jsonify({'suggestion': text, 'mock': False})
-
     except Exception as e:
         return jsonify({'error': f'AI request failed: {str(e)}'}), 500
