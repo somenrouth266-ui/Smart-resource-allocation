@@ -114,7 +114,6 @@
       <div style="display:flex;flex-direction:column;gap:10px;">
         {% for a in assignments %}
         <div style="padding:13px;background:var(--bg-card2);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;gap:12px;">
-          <!-- Avatar -->
           <div style="width:38px;height:38px;border-radius:50%;background:var(--accent-glow);border:1px solid rgba(59,130,246,0.3);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);flex-shrink:0;">
             {{ a.user.name[0].upper() }}
           </div>
@@ -153,9 +152,7 @@
 
 </div>
 
-<!-- ══════════════════════════════════════════
-     SMART MATCH SECTION
-═══════════════════════════════════════════ -->
+<!-- Smart Match -->
 <div class="card" id="match">
   <div class="card-header">
     <div>
@@ -173,8 +170,6 @@
   </div>
 
   {% if matches %}
-
-  <!-- Score legend -->
   <div style="display:flex;gap:20px;margin-bottom:20px;padding:12px 16px;background:var(--bg-card2);border-radius:var(--radius-sm);border:1px solid var(--border);flex-wrap:wrap;">
     <span style="font-size:0.75rem;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;line-height:2;">Score breakdown:</span>
     {% for label, pts, color in [
@@ -191,7 +186,6 @@
     {% endfor %}
   </div>
 
-  <!-- Filter bar -->
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" id="matchFilters">
     {% for label, val in [('All','all'),('Excellent','excellent'),('Good','good'),('Fair','fair')] %}
     <button class="btn btn-sm btn-ghost filter-btn" data-tier="{{ val }}"
@@ -202,7 +196,6 @@
     {% endfor %}
   </div>
 
-  <!-- Match cards -->
   <div id="matchList" style="display:flex;flex-direction:column;gap:12px;">
     {% for m in matches %}
     {% set v = m.volunteer %}
@@ -213,8 +206,6 @@
          onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
 
       <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;">
-
-        <!-- Rank + avatar -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;">
           <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--text-dim);">#{{ loop.index }}</div>
           <div style="width:44px;height:44px;border-radius:50%;
@@ -227,7 +218,6 @@
           </div>
         </div>
 
-        <!-- Main info -->
         <div style="flex:1;min-width:200px;">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px;">
             <span style="font-weight:600;font-size:0.95rem;color:var(--text);">{{ v.name }}</span>
@@ -242,7 +232,6 @@
             {{ v.email }} · {{ m.active_tasks }} active task{{ 's' if m.active_tasks != 1 }}
           </div>
 
-          <!-- Score mini-bars -->
           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">
             {% for label, pts, max_pts, color in [
               ('Skill', m.skill_pts, 50, 'var(--accent)'),
@@ -260,7 +249,6 @@
             {% endfor %}
           </div>
 
-          <!-- Skill tags -->
           <div style="display:flex;flex-wrap:wrap;gap:4px;">
             {% for skill in m.matching_skills %}
               <span class="skill-tag" style="border-color:var(--green);color:var(--green);">✓ {{ skill }}</span>
@@ -271,9 +259,7 @@
           </div>
         </div>
 
-        <!-- Total score + assign -->
         <div style="display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0;min-width:90px;">
-          <!-- Big score circle -->
           <div style="width:62px;height:62px;border-radius:50%;
                       background:{{ 'var(--green-bg)' if m.total>=75 else 'var(--yellow-bg)' if m.total>=50 else 'var(--red-bg)' }};
                       border:2px solid {{ 'var(--green)' if m.total>=75 else 'var(--yellow)' if m.total>=50 else 'var(--red)' }};
@@ -284,7 +270,6 @@
             <span style="font-size:0.55rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;">/ 100</span>
           </div>
 
-          <!-- Assign button -->
           {% if not task.is_full() %}
           <form method="POST" action="{{ url_for('coordinator.assign', user_id=v.id, task_id=task.id) }}">
             <input type="hidden" name="match_score" value="{{ m.skill_pct }}" />
@@ -310,7 +295,6 @@
       <a href="{{ url_for('coordinator.volunteers') }}" class="btn btn-ghost">View All Volunteers</a>
     </div>
   {% endif %}
-
 </div>
 
 <!-- AI Suggest Panel -->
@@ -319,7 +303,7 @@
     <div>
       <h3>🤖 AI Volunteer Suggestion</h3>
       <div style="font-size:0.8rem;color:var(--text-muted);margin-top:3px;">
-        Claude AI reviews match scores and gives a plain-English recommendation
+        Gemini AI reviews match scores and gives a plain-English recommendation
       </div>
     </div>
     {% if matches %}
@@ -337,16 +321,14 @@
   </div>
   {% else %}
 
-  <!-- Loading state -->
   <div id="aiLoading" style="display:none;padding:32px;text-align:center;">
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
       <div class="ai-spinner"></div>
-      <span style="color:var(--text-muted);font-size:0.9rem;">Claude is reviewing {{ matches|length }} candidate{{ 's' if matches|length != 1 }}…</span>
+      <span style="color:var(--text-muted);font-size:0.9rem;">Gemini is reviewing {{ matches|length }} candidate{{ 's' if matches|length != 1 }}…</span>
     </div>
     <div style="font-size:0.78rem;color:var(--text-dim);">Analysing skills · availability · workload · reliability</div>
   </div>
 
-  <!-- Result -->
   <div id="aiResult" style="display:none;">
     <div style="padding:20px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.06));
                 border:1px solid rgba(139,92,246,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
@@ -357,12 +339,11 @@
     </div>
     <div id="aiMockNote" style="display:none;padding:10px 14px;background:var(--yellow-bg);border:1px solid rgba(245,158,11,0.2);
          border-radius:var(--radius-sm);font-size:0.78rem;color:var(--yellow);">
-      ⚠ Running in demo mode. Set <code style="font-family:var(--font-mono);">ANTHROPIC_API_KEY</code> in your <code style="font-family:var(--font-mono);">.env</code> for full AI suggestions.
+      ⚠ Running in demo mode. Set <code style="font-family:var(--font-mono);">GEMINI_API_KEY</code> in your <code style="font-family:var(--font-mono);">.env</code> for full AI suggestions.
     </div>
     <button class="btn btn-ghost btn-sm mt-16" onclick="resetAI()">↺ Ask again</button>
   </div>
 
-  <!-- Error state -->
   <div id="aiError" style="display:none;padding:16px;background:var(--red-bg);border:1px solid rgba(239,68,68,0.2);
        border-radius:var(--radius-sm);font-size:0.88rem;color:var(--red);"></div>
 
@@ -384,7 +365,6 @@
 .mt-16 { margin-top: 16px; }
 </style>
 <script>
-// Filter match cards by tier
 function filterMatches(tier) {
   document.querySelectorAll('.match-card').forEach(card => {
     card.style.display = (tier === 'all' || card.dataset.tier === tier) ? 'block' : 'none';
@@ -397,7 +377,6 @@ function filterMatches(tier) {
   });
 }
 
-// AI Suggestion
 async function getAISuggestion() {
   document.getElementById('aiBtn').style.display      = 'none';
   document.getElementById('aiLoading').style.display  = 'block';
@@ -417,7 +396,6 @@ async function getAISuggestion() {
       return;
     }
 
-    // Render markdown-like bold (**text**) simply
     const html = data.suggestion
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n\n/g, '</p><p style="margin-top:10px;">')
