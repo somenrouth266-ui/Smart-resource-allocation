@@ -28,7 +28,6 @@ def create_app():
 
     # AI API Keys - Pulling directly from Railway Environment Variables
     app.config['GEMINI_API_KEY'] = os.getenv('GEMINI_API_KEY', '')
-    app.config['ANTHROPIC_API_KEY'] = os.getenv('ANTHROPIC_API_KEY', '')
 
     # --- INITIALIZATION ---
     db.init_app(app)
