@@ -116,17 +116,12 @@
     </div>
 
     <div id="aiResult" style="display:none;">
-      <div style="padding:20px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.06)); border:1px solid rgba(139,92,246,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
+      <div style="padding:20px;background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(59,130,246,0.06));border:1px solid rgba(139,92,246,0.2);border-radius:var(--radius-sm);margin-bottom:16px;">
         <div style="display:flex;gap:12px;">
           <div style="font-size:1.8rem;">🤖</div>
           <div id="aiText" style="font-size:0.9rem;line-height:1.75;flex:1;"></div>
         </div>
       </div>
-      
-      <div id="aiMockNote" style="display:none;padding:10px 14px;background:var(--yellow-bg);border:1px solid rgba(245,158,11,0.2); border-radius:var(--radius-sm);font-size:0.78rem;color:var(--yellow);margin-bottom:16px;">
-        ⚠ Running in demo mode. Set GEMINI_API_KEY in Railway for full AI suggestions.
-      </div>
-      
       <button class="btn btn-ghost btn-sm" onclick="resetAI()">↺ Ask again</button>
     </div>
 
@@ -153,15 +148,12 @@ async function getAISuggestion() {
   const aiLoading = document.getElementById('aiLoading');
   const aiResult = document.getElementById('aiResult');
   const aiError = document.getElementById('aiError');
-  const aiMockNote = document.getElementById('aiMockNote');
   const aiText = document.getElementById('aiText');
 
-  // Clear UI State
   aiBtn.style.display = 'none';
   aiLoading.style.display = 'block';
   aiResult.style.display = 'none';
   aiError.style.display = 'none';
-  aiMockNote.style.display = 'none';
 
   try {
     const resp = await fetch('/ai/suggest/{{ task.id }}', { method: 'POST' });
@@ -176,7 +168,6 @@ async function getAISuggestion() {
       return;
     }
 
-    // Format results
     const html = data.suggestion
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\n\n/g, '</p><p style="margin-top:10px;">')
@@ -184,13 +175,6 @@ async function getAISuggestion() {
 
     aiText.innerHTML = '<p>' + html + '</p>';
     aiResult.style.display = 'block';
-
-    // Toggle mock note
-    if (data.mock === true) {
-      aiMockNote.style.display = 'block';
-    } else {
-      aiMockNote.style.display = 'none';
-    }
 
   } catch(e) {
     aiLoading.style.display = 'none';
